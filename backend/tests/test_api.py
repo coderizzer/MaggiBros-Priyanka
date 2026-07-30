@@ -235,4 +235,30 @@ def test_knowledge_search_empty(client):
     # Should return empty list gracefully
     assert len(data["results"]) == 0
 
+def test_ai_services_functions():
+    from backend.app.services.ai_service import detect_student_intent, generate_faq_response, classify_complaint_details
+    
+    # 1. Test student intent detection
+    res1 = detect_student_intent("My room has a water leak from the AC")
+    assert res1["intent"] == "COMPLAINT"
+    assert res1["category"] == "water_leakage"
+    assert res1["priority"] in ["HIGH", "CRITICAL", "MEDIUM"]
+    
+    res2 = detect_student_intent("What is the registration deadline for next sem?")
+    assert res2["intent"] == "FAQ"
+    
+    # 2. Test RAG FAQ response constraints
+    faq_res = generate_faq_response(
+        query="When is the deadline?", 
+        context="No specific details found in university documents."
+    )
+    # Checks system prompt constraint is respected (mentions not found/cannot find)
+    assert any(k in faq_res.lower() for k in ["cannot", "not find", "unavailable", "welcome", "operational help"])
+    
+    # 3. Test complaint classification details
+    class_res = classify_complaint_details("The WiFi router is completely flashing red and no one can connect")
+    assert class_res["category"] == "wifi"
+    assert class_res["priority"] == "HIGH"
+
+
 
