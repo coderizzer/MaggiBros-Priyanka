@@ -73,17 +73,28 @@
             <!-- Global Header -->
             <header class="top-header">
                 <h1 id="view-title">Dashboard</h1>
-                <div class="user-profile">
-                    <div class="user-info">
-                        <span class="user-welcome">Welcome,</span>
-                        <span class="user-name" id="profile-name">Administrator</span>
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <!-- Live Sync Indicator -->
+                    <div class="live-sync-indicator" id="live-sync-toggle" onclick="toggleLiveSync()" title="Toggle live auto-refresh" style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); padding: 6px 12px; border-radius: 20px; font-size: 10px; font-weight: 700; color: #10b981; letter-spacing: 0.5px; transition: var(--transition);">
+                        <span class="sync-pulse-dot" style="width: 6px; height: 6px; background-color: #10b981; border-radius: 50%; display: inline-block; animation: syncPulse 1.5s infinite;"></span>
+                        <span class="live-label">LIVE SYNC</span>
                     </div>
-                    <div class="avatar">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
-                    <button class="btn-logout" onclick="signOutUser()" title="Sign Out" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 15px; margin-left: 8px; transition: var(--transition);">
-                        <i class="fa-solid fa-right-from-bracket"></i>
+                    <!-- Export Report -->
+                    <button class="btn btn-secondary btn-export" onclick="exportTicketsCSV()" title="Export Tickets to CSV" style="padding: 6px 12px; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 6px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-base); border-radius: 8px; cursor: pointer; transition: var(--transition);">
+                        <i class="fa-solid fa-file-arrow-down"></i> Export Report
                     </button>
+                    <div class="user-profile">
+                        <div class="user-info">
+                            <span class="user-welcome">Welcome,</span>
+                            <span class="user-name" id="profile-name">Administrator</span>
+                        </div>
+                        <div class="avatar">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <button class="btn-logout" onclick="signOutUser()" title="Sign Out" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 15px; margin-left: 8px; transition: var(--transition);">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -243,6 +254,14 @@
                                 <h3>Campus Map</h3>
                                 <button class="btn-interactive" onclick="openMapModal()">Interactive</button>
                             </div>
+                            <div class="map-filters" style="display: flex; gap: 6px; padding: 0 16px 12px 16px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--border-color); margin-bottom: 8px;">
+                                <span class="map-filter-badge active" onclick="filterMapCategory('ALL')" style="padding: 4px 10px; font-size: 10px; font-weight: 600; border-radius: 12px; cursor: pointer; background: var(--primary); color: white; transition: var(--transition); white-space: nowrap;">All</span>
+                                <span class="map-filter-badge" onclick="filterMapCategory('water_leakage')" style="padding: 4px 10px; font-size: 10px; font-weight: 600; border-radius: 12px; cursor: pointer; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-muted); transition: var(--transition); white-space: nowrap;">💧 Water</span>
+                                <span class="map-filter-badge" onclick="filterMapCategory('electricity')" style="padding: 4px 10px; font-size: 10px; font-weight: 600; border-radius: 12px; cursor: pointer; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-muted); transition: var(--transition); white-space: nowrap;">⚡ Electric</span>
+                                <span class="map-filter-badge" onclick="filterMapCategory('wifi')" style="padding: 4px 10px; font-size: 10px; font-weight: 600; border-radius: 12px; cursor: pointer; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-muted); transition: var(--transition); white-space: nowrap;">🌐 Wi-Fi</span>
+                                <span class="map-filter-badge" onclick="filterMapCategory('cleanliness')" style="padding: 4px 10px; font-size: 10px; font-weight: 600; border-radius: 12px; cursor: pointer; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-muted); transition: var(--transition); white-space: nowrap;">🧹 Hygiene</span>
+                                <span class="map-filter-badge" onclick="filterMapCategory('security')" style="padding: 4px 10px; font-size: 10px; font-weight: 600; border-radius: 12px; cursor: pointer; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-muted); transition: var(--transition); white-space: nowrap;">🛡️ Security</span>
+                            </div>
                             <div class="map-vector-container">
                                 <!-- Exact VIT Bhopal Campus Map (Boys Hostel Blocks Removed) -->
                                 <img src="vit_bhopal_map.jpg" alt="VIT Bhopal Campus Map" class="map-img">
@@ -376,6 +395,13 @@
                     </div>
                     <button class="btn btn-secondary btn-close-location" onclick="cancelComplaintFiling()">Cancel</button>
                 </div>
+            </div>
+
+            <!-- Chat Quick Starters -->
+            <div class="chat-quick-starters" style="display: flex; gap: 6px; padding: 8px 16px; overflow-x: auto; scrollbar-width: none; border-top: 1px solid var(--border-color); background: rgba(0, 0, 0, 0.1);">
+                <button class="quick-starter-pill" onclick="sendQuickStarter('Report water leakage at Boys Hostel Blocks')" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 4px 8px; font-size: 10px; color: var(--text-muted); cursor: pointer; transition: var(--transition); white-space: nowrap; font-weight: 500; display: flex; align-items: center; gap: 4px;">💧 Water Leak</button>
+                <button class="quick-starter-pill" onclick="sendQuickStarter('Report power issue at Academic Block-1')" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 4px 8px; font-size: 10px; color: var(--text-muted); cursor: pointer; transition: var(--transition); white-space: nowrap; font-weight: 500; display: flex; align-items: center; gap: 4px;">⚡ Power Cut</button>
+                <button class="quick-starter-pill" onclick="sendQuickStarter('How do we fix slow wifi?')" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 4px 8px; font-size: 10px; color: var(--text-muted); cursor: pointer; transition: var(--transition); white-space: nowrap; font-weight: 500; display: flex; align-items: center; gap: 4px;">🌐 Slow Wi-Fi</button>
             </div>
 
             <div class="chat-input-area">

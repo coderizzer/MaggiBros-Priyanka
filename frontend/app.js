@@ -11,7 +11,11 @@ let state = {
     departments: [],
     awaitingLocation: false,
     currentComplaintMessage: "",
-    currentComplaintCategory: ""
+    currentComplaintCategory: "",
+    selectedMapCategory: "ALL",
+    mapLocations: [],
+    isLiveSyncActive: true,
+    liveSyncInterval: null
 };
 
 // Start initialization
@@ -28,6 +32,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Periodically fetch dashboard
     refreshDashboard();
     fetchTickets();
+    
+    // Start live sync interval loop
+    startLiveSync();
 });
 
 // 1. Navigation Tab Controller
@@ -282,8 +289,9 @@ async function refreshDashboard() {
         const mapRes = await fetch(`${BACKEND_URL}/api/map/complaints`);
         if (mapRes.ok) {
             const mapData = await mapRes.json();
-            populateMapOverlay(mapData.locations, ".map-vector-container", ".map-img");
-            populateMapOverlay(mapData.locations, "#big-map-container", ".map-img-big");
+            state.mapLocations = mapData.locations;
+            populateMapOverlay(state.mapLocations, ".map-vector-container", ".map-img");
+            populateMapOverlay(state.mapLocations, "#big-map-container", ".map-img-big");
         }
     } catch (e) {
         console.error("Dashboard refresh failure:", e);
@@ -429,30 +437,39 @@ function populateMapOverlay(locations, containerSelector, imgSelector) {
     
     locations.forEach(loc => {
         const coords = coordsLookup[loc.name];
-        if (coords && loc.total_complaints > 0) {
+        const selectedCat = state.selectedMapCategory || 'ALL';
+        
+        let count = 0;
+        if (selectedCat === 'ALL') {
+            count = loc.total_complaints;
+        } else {
+            count = loc.categories ? (loc.categories[selectedCat] || 0) : 0;
+        }
+
+        if (coords && count > 0) {
             const pin = document.createElement("div");
             pin.className = "heatmap-overlay-pin";
             pin.style.top = coords.top;
             pin.style.left = coords.left;
             
             // Select severity color
-            if (loc.total_complaints > 15) {
+            if (count > 15) {
                 pin.classList.add("pin-severity-high");
-            } else if (loc.total_complaints > 5) {
+            } else if (count > 5) {
                 pin.classList.add("pin-severity-medium");
             } else {
                 pin.classList.add("pin-severity-low");
             }
             
             // Scale pin size depending on active volume
-            const size = Math.min(10 + loc.total_complaints * 0.8, 30);
+            const size = Math.min(10 + count * 1.5, 32);
             pin.style.width = `${size}px`;
             pin.style.height = `${size}px`;
             
             // Hover details tooltip
             const tooltip = document.createElement("span");
             tooltip.className = "pin-tooltip";
-            tooltip.innerHTML = `<strong>${loc.name}</strong><br>${loc.total_complaints} active issues`;
+            tooltip.innerHTML = `<strong>${loc.name}</strong><br>${count} active ${selectedCat !== 'ALL' ? selectedCat.replace('_', ' ') : ''} issues`;
             pin.appendChild(tooltip);
             
             container.appendChild(pin);
@@ -543,5 +560,118 @@ function showLoginError(msg) {
     if (errorSpan) {
         errorSpan.textContent = msg;
         errorSpan.classList.remove("hidden");
+    }
+}
+
+// 10/10 Hackathon Upgrade Interactions
+function filterMapCategory(category) {
+    state.selectedMapCategory = category;
+    
+    // Highlight active filter pill
+    const badges = document.querySelectorAll(".map-filter-badge");
+    badges.forEach(badge => {
+        if (badge.getAttribute("onclick").includes(`'${category}'`)) {
+            badge.style.background = "var(--primary)";
+            badge.style.color = "white";
+            badge.style.borderColor = "var(--primary)";
+        } else {
+            badge.style.background = "var(--bg-card)";
+            badge.style.color = "var(--text-muted)";
+            badge.style.borderColor = "var(--border-color)";
+        }
+    });
+
+    // Re-render map layers
+    populateMapOverlay(state.mapLocations, ".map-vector-container", ".map-img");
+    populateMapOverlay(state.mapLocations, "#big-map-container", ".map-img-big");
+}
+
+function sendQuickStarter(text) {
+    const chatInput = document.getElementById("chat-input");
+    const sendBtn = document.getElementById("btn-send");
+    
+    // Check if chat drawer is visible. If not, open it
+    const chatDrawer = document.getElementById("chat-copilot");
+    if (chatDrawer && chatDrawer.classList.contains("hidden")) {
+        toggleChatWindow();
+    }
+    
+    if (chatInput && sendBtn) {
+        chatInput.value = text;
+        sendBtn.click();
+    }
+}
+
+async function exportTicketsCSV() {
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/tickets`);
+        if (!res.ok) throw new Error();
+        const tickets = await res.json();
+        
+        // Compile CSV contents
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Ticket ID,Title,Description,Status,Priority,Department,Location,Created At\n";
+        
+        tickets.forEach(t => {
+            const row = [
+                t.id,
+                `"${t.title.replace(/"/g, '""')}"`,
+                `"${t.description.replace(/"/g, '""')}"`,
+                t.status,
+                t.priority,
+                t.department ? t.department.name : "Unassigned",
+                t.location ? t.location.name : "Unassigned",
+                t.created_at
+            ].join(",");
+            csvContent += row + "\n";
+        });
+        
+        // Direct browser file download trigger
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `campuspilot_export_${Date.now()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (e) {
+        alert("Failed to export tickets list. Backend connection error.");
+    }
+}
+
+function startLiveSync() {
+    if (state.liveSyncInterval) clearInterval(state.liveSyncInterval);
+    
+    state.liveSyncInterval = setInterval(() => {
+        if (state.isLiveSyncActive) {
+            refreshDashboard();
+            fetchTickets();
+        }
+    }, 10000); // 10s auto-refresh heartbeat
+}
+
+function toggleLiveSync() {
+    state.isLiveSyncActive = !state.isLiveSyncActive;
+    const badge = document.getElementById("live-sync-toggle");
+    const dot = badge ? badge.querySelector(".sync-pulse-dot") : null;
+    
+    if (badge) {
+        if (state.isLiveSyncActive) {
+            badge.style.color = "#10b981";
+            badge.style.background = "rgba(16, 185, 129, 0.08)";
+            badge.style.borderColor = "rgba(16, 185, 129, 0.2)";
+            if (dot) {
+                dot.style.backgroundColor = "#10b981";
+                dot.style.animation = "syncPulse 1.5s infinite";
+            }
+        } else {
+            badge.style.color = "var(--text-muted)";
+            badge.style.background = "rgba(255, 255, 255, 0.02)";
+            badge.style.borderColor = "var(--border-color)";
+            if (dot) {
+                dot.style.backgroundColor = "var(--text-muted)";
+                dot.style.animation = "none";
+            }
+        }
     }
 }
