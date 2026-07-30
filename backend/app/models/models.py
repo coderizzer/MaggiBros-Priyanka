@@ -73,3 +73,14 @@ class RAGDocument(Base):
     title = Column(String, nullable=False)
     file_path = Column(String, nullable=False)
     uploaded_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    sender = Column(String, nullable=False) # "user" or "assistant"
+    message = Column(Text, nullable=False)
+    intent = Column(String, nullable=True) # e.g. "FAQ", "COMPLAINT", etc.
+    ticket_id = Column(Integer, nullable=True) # Link to ticket if generated
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
