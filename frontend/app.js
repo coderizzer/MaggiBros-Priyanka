@@ -3,7 +3,9 @@
 // Handles API calls, tab navigation, modals, and dynamic data state
 // -------------------------------------------------------------
 
-const BACKEND_URL = "http://localhost:8000";
+const BACKEND_URL = window.location.origin.includes("localhost") || window.location.origin.includes("127.0.0.1")
+    ? "http://localhost:8000"
+    : window.location.origin;
 
 // Global Data Store
 let state = {
