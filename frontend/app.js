@@ -16,6 +16,7 @@ let state = {
 
 // Start initialization
 document.addEventListener("DOMContentLoaded", () => {
+    checkLoginState();
     initNavigation();
     initChat();
     checkBackendHealth();
@@ -472,5 +473,75 @@ function closeMapModal() {
     const modal = document.getElementById("map-modal");
     if (modal) {
         modal.classList.add("hidden");
+    }
+}
+
+// Authentication Logic
+function checkLoginState() {
+    const email = localStorage.getItem("user_email");
+    const name = localStorage.getItem("user_name");
+    const overlay = document.getElementById("login-overlay");
+    const profileName = document.getElementById("profile-name");
+    
+    if (email && email.toLowerCase().endsWith("@vitbhopal.ac.in")) {
+        if (profileName) profileName.textContent = name || "VIT Member";
+        if (overlay) overlay.classList.add("hidden");
+    } else {
+        if (overlay) overlay.classList.remove("hidden");
+    }
+}
+
+function handleGoogleSignIn(response) {
+    try {
+        const base64Url = response.credential.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+
+        const profile = JSON.parse(jsonPayload);
+        const email = profile.email.toLowerCase();
+        
+        if (email.endsWith("@vitbhopal.ac.in")) {
+            localStorage.setItem("user_email", email);
+            localStorage.setItem("user_name", profile.name || "VIT Member");
+            checkLoginState();
+            refreshDashboard();
+            fetchTickets();
+        } else {
+            showLoginError("Access Denied. Only VIT Bhopal email accounts (@vitbhopal.ac.in) are permitted.");
+        }
+    } catch (e) {
+        showLoginError("Google Sign-In decoding failed. Please use local verification bypass.");
+    }
+}
+
+function submitLocalLogin() {
+    const emailInput = document.getElementById("local-email-input");
+    const email = emailInput.value.trim().toLowerCase();
+    
+    if (email.endsWith("@vitbhopal.ac.in")) {
+        const mockName = email.split("@")[0].replace(/[._]/g, " ").toUpperCase();
+        localStorage.setItem("user_email", email);
+        localStorage.setItem("user_name", mockName);
+        checkLoginState();
+        refreshDashboard();
+        fetchTickets();
+    } else {
+        showLoginError("Access Denied. Only VIT Bhopal email accounts (@vitbhopal.ac.in) are permitted.");
+    }
+}
+
+function signOutUser() {
+    localStorage.removeItem("user_email");
+    localStorage.removeItem("user_name");
+    checkLoginState();
+}
+
+function showLoginError(msg) {
+    const errorSpan = document.getElementById("login-error-msg");
+    if (errorSpan) {
+        errorSpan.textContent = msg;
+        errorSpan.classList.remove("hidden");
     }
 }
