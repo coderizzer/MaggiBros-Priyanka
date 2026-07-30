@@ -276,6 +276,65 @@ async function refreshDashboard() {
                 }).join("");
             }
         }
+
+        // Load Heatmap hotspots from backend and overlay them on the map
+        const mapRes = await fetch(`${BACKEND_URL}/api/map/complaints`);
+        if (mapRes.ok) {
+            const mapData = await mapRes.json();
+            const container = document.querySelector(".map-vector-container");
+            if (container) {
+                // Keep only the map image
+                const mapImg = container.querySelector(".map-img");
+                container.innerHTML = "";
+                if (mapImg) {
+                    container.appendChild(mapImg);
+                }
+                
+                // Add pins based on coordinates lookup
+                const coordsLookup = {
+                    "Academic Block-1": { top: "25%", left: "32%" },
+                    "Academic Block-2": { top: "58%", left: "53%" },
+                    "Boys Hostel Blocks": { top: "28%", left: "60%" },
+                    "Girls Hostel": { top: "56%", left: "32%" },
+                    "Hostel Office": { top: "70%", left: "63%" },
+                    "Boys Playground": { top: "52%", left: "80%" },
+                    "Special Building": { top: "85%", left: "36%" },
+                    "Lab Complex": { top: "18%", left: "24%" }
+                };
+                
+                mapData.locations.forEach(loc => {
+                    const coords = coordsLookup[loc.name];
+                    if (coords && loc.total_complaints > 0) {
+                        const pin = document.createElement("div");
+                        pin.className = "heatmap-overlay-pin";
+                        pin.style.top = coords.top;
+                        pin.style.left = coords.left;
+                        
+                        // Select severity color
+                        if (loc.total_complaints > 15) {
+                            pin.classList.add("pin-severity-high");
+                        } else if (loc.total_complaints > 5) {
+                            pin.classList.add("pin-severity-medium");
+                        } else {
+                            pin.classList.add("pin-severity-low");
+                        }
+                        
+                        // Scale pin size depending on active volume
+                        const size = Math.min(10 + loc.total_complaints * 0.8, 30);
+                        pin.style.width = `${size}px`;
+                        pin.style.height = `${size}px`;
+                        
+                        // Hover details tooltip
+                        const tooltip = document.createElement("span");
+                        tooltip.className = "pin-tooltip";
+                        tooltip.innerHTML = `<strong>${loc.name}</strong><br>${loc.total_complaints} active issues`;
+                        pin.appendChild(tooltip);
+                        
+                        container.appendChild(pin);
+                    }
+                });
+            }
+        }
     } catch (e) {
         console.error("Dashboard refresh failure:", e);
     }
