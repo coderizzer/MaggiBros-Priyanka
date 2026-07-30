@@ -5,7 +5,7 @@ from backend.app.ai.services import detect_user_intent, route_ticket_details
 from backend.app.vectorstore.manager import vector_store
 from backend.app.ai.client import ai_client
 from backend.app.database.connection import SessionLocal
-from backend.app.models.models import Ticket, Department, Location
+from backend.app.models.models import Ticket, Department, Location, Complaint
 
 class AgentState(TypedDict):
     message: str
@@ -88,17 +88,32 @@ def create_ticket_node(state: AgentState) -> AgentState:
             if not loc:
                 loc = db.query(Location).first() # absolute fallback
                 
-        # Create ticket record
-        new_ticket = Ticket(
-            title=message[:60] + ("..." if len(message) > 60 else ""),
-            description=message,
+        # Create complaint record first
+        new_complaint = Complaint(
+            user_id=1,  # Mock user ID for the current session
+            location_id=loc.id if loc else 1,
             category=route_details.category,
+            description=message,
+            priority=route_details.recommended_priority
+        )
+        db.add(new_complaint)
+        db.commit()
+        db.refresh(new_complaint)
+
+        # Estimate resolution hours
+        from backend.app.api.tickets import calculate_resolution_hours
+        est_hours = calculate_resolution_hours(new_complaint.priority)
+
+        # Create ticket record associated with complaint
+        new_ticket = Ticket(
+            complaint_id=new_complaint.id,
+            title=f"Ticket for Complaint #{new_complaint.id}: {new_complaint.category.replace('_', ' ').title()}",
+            description=message,
             status="OPEN",
-            priority=route_details.recommended_priority,
-            student_name=state["student_name"],
-            student_email=state["student_email"],
+            priority=new_complaint.priority,
             department_id=dept.id if dept else None,
-            location_id=loc.id if loc else None
+            location_id=loc.id if loc else None,
+            estimated_resolution_hours=est_hours
         )
         db.add(new_ticket)
         db.commit()

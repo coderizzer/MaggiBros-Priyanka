@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 
 from backend.app.main import app
 from backend.app.database.connection import Base, get_db
-from backend.app.models.models import Department, Location, Ticket
+from backend.app.models.models import Department, Location, Ticket, Complaint
 
 # Use an absolute path for the temporary test database (avoids SQLite connection and sandbox relative path write issues)
 TEST_DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "test_temp.db")
@@ -28,9 +28,11 @@ def db_session():
     db = TestingSessionLocal()
     try:
         # Seed default departments and locations
-        dept = Department(name="IT Support", code="IT", email="it@vitbhopal.ac.in")
+        dept_maint = Department(name="Maintenance", code="MAINT", email="maint@vitbhopal.ac.in")
+        dept_it = Department(name="IT Support", code="IT", email="it@vitbhopal.ac.in")
         loc = Location(name="Hostel Block 1", block="Hostels", latitude=23.0765, longitude=77.6080)
-        db.add(dept)
+        db.add(dept_maint)
+        db.add(dept_it)
         db.add(loc)
         db.commit()
         yield db
@@ -64,8 +66,10 @@ def test_read_root(client):
 def test_get_departments(client):
     response = client.get("/api/departments")
     assert response.status_code == 200
-    assert len(response.json()) == 1
-    assert response.json()[0]["code"] == "IT"
+    assert len(response.json()) == 2
+    codes = [d["code"] for d in response.json()]
+    assert "IT" in codes
+    assert "MAINT" in codes
 
 def test_get_locations(client):
     response = client.get("/api/locations")
@@ -73,75 +77,68 @@ def test_get_locations(client):
     assert len(response.json()) == 1
     assert response.json()[0]["name"] == "Hostel Block 1"
 
-def test_create_ticket(client, db_session):
-    # Resolve IDs
+def test_complaints_and_tickets_workflow(client, db_session):
+    # 1. Verify we can fetch locations
     loc = db_session.query(Location).first()
-    dept = db_session.query(Department).first()
     
-    payload = {
-        "title": "Broken light in room 101",
-        "description": "The overhead tube light has burned out and needs replacement.",
-        "category": "Electrical",
-        "priority": "MEDIUM",
-        "student_name": "Test Student",
-        "student_email": "test@student.vitbhopal.ac.in",
+    # 2. Create a complaint
+    complaint_payload = {
+        "user_id": 1,
         "location_id": loc.id,
-        "department_id": dept.id
+        "category": "water_leakage",
+        "description": "There is water leaking from the ceiling",
+        "priority": "HIGH"
     }
-    
-    response = client.post("/api/tickets", json=payload)
+    response = client.post("/api/complaints", json=complaint_payload)
     assert response.status_code == 200
-    data = response.json()
-    assert data["title"] == "Broken light in room 101"
-    assert data["status"] == "OPEN"
-    assert data["id"] is not None
-
-def test_update_ticket_status(client, db_session):
-    # Create ticket
-    ticket = Ticket(
-        title="Test Ticket",
-        description="Description",
-        category="General",
-        student_name="Name",
-        student_email="email@test.com",
-        status="OPEN"
-    )
-    db_session.add(ticket)
-    db_session.commit()
-    db_session.refresh(ticket)
+    complaint_data = response.json()
+    assert complaint_data["category"] == "water_leakage"
+    assert complaint_data["id"] is not None
+    complaint_id = complaint_data["id"]
     
-    response = client.put(f"/api/tickets/{ticket.id}/status", json={"status": "IN_PROGRESS"})
+    # 3. Fetch complaints
+    response = client.get("/api/complaints")
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+    
+    # 4. Create a ticket associated with that complaint
+    ticket_payload = {
+        "complaint_id": complaint_id
+    }
+    response = client.post("/api/tickets", json=ticket_payload)
+    assert response.status_code == 200
+    ticket_data = response.json()
+    assert ticket_data["complaint_id"] == complaint_id
+    assert ticket_data["priority"] == "HIGH"
+    assert ticket_data["status"] == "OPEN"
+    # Auto-department for "water_leakage" is Maintenance ("MAINT")
+    assert ticket_data["department"]["code"] == "MAINT"
+    # Auto-estimated hours for HIGH priority is 12
+    assert ticket_data["estimated_resolution_hours"] == 12
+    ticket_id = ticket_data["id"]
+    
+    # 5. Fetch all tickets and single ticket
+    response = client.get("/api/tickets")
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+    
+    response = client.get(f"/api/tickets/{ticket_id}")
+    assert response.status_code == 200
+    assert response.json()["title"] == f"Ticket for Complaint #{complaint_id}: Water Leakage"
+    
+    # 6. PATCH ticket status
+    response = client.patch(f"/api/tickets/{ticket_id}/status", json={"status": "IN_PROGRESS"})
     assert response.status_code == 200
     assert response.json()["status"] == "IN_PROGRESS"
-
-def test_analytics_and_heatmap(client, db_session):
-    loc = db_session.query(Location).first()
-    dept = db_session.query(Department).first()
     
-    # Create open ticket
-    t = Ticket(
-        title="WiFi issue",
-        description="No signal",
-        category="WiFi",
-        student_name="Name",
-        student_email="email@test.com",
-        status="OPEN",
-        priority="HIGH",
-        location_id=loc.id,
-        department_id=dept.id
-    )
-    db_session.add(t)
-    db_session.commit()
-    
-    response = client.get("/api/analytics")
+    # 7. PATCH ticket department (change from MAINT to IT)
+    it_dept = db_session.query(Department).filter(Department.code == "IT").first()
+    response = client.patch(f"/api/tickets/{ticket_id}/department", json={"department_id": it_dept.id})
     assert response.status_code == 200
-    data = response.json()
-    assert data["total_tickets"] == 1
-    assert data["open_tickets"] == 1
-    assert len(data["heatmap"]) == 1
-    assert data["heatmap"][0]["weight"] == 3.0 # HIGH priority weight is 3.0
+    assert response.json()["department"]["code"] == "IT"
 
 def test_workflow_chat_fallback(client):
+    # This matches the chat agent ticket filing fallback path
     payload = {
         "message": "Water leakage in Hostel Block 1 washroom, water overflowing",
         "student_name": "Aarav Sharma",

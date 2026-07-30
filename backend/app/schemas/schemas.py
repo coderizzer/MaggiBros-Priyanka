@@ -35,22 +35,38 @@ class LocationOut(LocationBase):
         from_attributes = True
 
 
+# Complaint schemas
+class ComplaintBase(BaseModel):
+    user_id: int
+    location_id: int
+    category: str
+    description: str
+    priority: Optional[str] = "MEDIUM"
+
+class ComplaintCreate(ComplaintBase):
+    pass
+
+class ComplaintOut(ComplaintBase):
+    id: int
+    created_at: datetime
+    location: Optional[LocationOut] = None
+
+    class Config:
+        from_attributes = True
+
+
 # Ticket schemas
-class TicketBase(BaseModel):
+class TicketCreate(BaseModel):
+    complaint_id: int
+
+class TicketOut(BaseModel):
+    id: int
+    complaint_id: Optional[int] = None
     title: str
     description: str
-    category: Optional[str] = None
-    priority: Optional[str] = "MEDIUM"
-    student_name: str
-    student_email: EmailStr
-
-class TicketCreate(TicketBase):
-    location_id: Optional[int] = None
-    department_id: Optional[int] = None
-
-class TicketOut(TicketBase):
-    id: int
     status: str
+    priority: str
+    estimated_resolution_hours: int
     created_at: datetime
     updated_at: datetime
     location: Optional[LocationOut] = None
@@ -61,6 +77,9 @@ class TicketOut(TicketBase):
 
 class TicketStatusUpdate(BaseModel):
     status: str
+
+class TicketDepartmentUpdate(BaseModel):
+    department_id: int
 
 
 # RAG/Knowledge base schemas
@@ -118,7 +137,7 @@ class HeatmapPoint(BaseModel):
     location_name: str
     latitude: float
     longitude: float
-    weight: float # based on active tickets count & severity
+    weight: float
     active_tickets_count: int
 
 class AnalyticsResponse(BaseModel):

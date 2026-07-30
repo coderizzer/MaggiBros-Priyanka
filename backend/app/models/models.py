@@ -24,27 +24,44 @@ class Location(Base):
     longitude = Column(Float, nullable=False)
 
     tickets = relationship("Ticket", back_populates="location")
+    complaints = relationship("Complaint", back_populates="location")
+
+
+class Complaint(Base):
+    __tablename__ = "complaints"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, nullable=False)
+    location_id = Column(Integer, ForeignKey("locations.id"), nullable=False)
+    category = Column(String, nullable=False) # e.g. water_leakage, electricity, wifi, etc.
+    description = Column(Text, nullable=False)
+    priority = Column(String, default="MEDIUM") # LOW, MEDIUM, HIGH, CRITICAL
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    # Relationships
+    location = relationship("Location", back_populates="complaints")
+    ticket = relationship("Ticket", uselist=False, back_populates="complaint")
 
 
 class Ticket(Base):
     __tablename__ = "tickets"
 
     id = Column(Integer, primary_key=True, index=True)
+    complaint_id = Column(Integer, ForeignKey("complaints.id"), nullable=True)
     title = Column(String, nullable=False)
     description = Column(Text, nullable=False)
-    category = Column(String, nullable=True) # e.g. "WiFi", "Plumbing", "Electrical", "Course Registration"
     status = Column(String, default="OPEN") # OPEN, IN_PROGRESS, RESOLVED
-    priority = Column(String, default="MEDIUM") # LOW, MEDIUM, HIGH
-    student_name = Column(String, nullable=False)
-    student_email = Column(String, nullable=False)
+    priority = Column(String, default="MEDIUM") # LOW, MEDIUM, HIGH, CRITICAL
     
     department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
     location_id = Column(Integer, ForeignKey("locations.id"), nullable=True)
+    estimated_resolution_hours = Column(Integer, default=24)
     
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
     # Relationships
+    complaint = relationship("Complaint", back_populates="ticket")
     department = relationship("Department", back_populates="tickets")
     location = relationship("Location", back_populates="tickets")
 
