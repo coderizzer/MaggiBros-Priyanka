@@ -71,6 +71,7 @@ class TicketOut(BaseModel):
     updated_at: datetime
     location: Optional[LocationOut] = None
     department: Optional[DepartmentOut] = None
+    complaint: Optional[ComplaintOut] = None
 
     class Config:
         from_attributes = True
