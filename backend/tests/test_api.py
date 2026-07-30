@@ -260,5 +260,39 @@ def test_ai_services_functions():
     assert class_res["category"] == "wifi"
     assert class_res["priority"] == "HIGH"
 
+def test_main_chat_endpoint(client, db_session):
+    # 1. Test FAQ path
+    faq_payload = {"message": "When is the revaluation deadline?"}
+    response = client.post("/chat", json=faq_payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["type"] == "answer"
+    assert "source" in data
+    assert data["source"]["document"] is not None
+    
+    # 2. Test Complaint interception (no location)
+    complaint_payload = {"message": "My hostel has water leakage."}
+    response = client.post("/chat", json=complaint_payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["type"] == "complaint"
+    assert data["category"] == "water_leakage"
+    assert data["next_action"] == "select_location"
+    
+    # 3. Test direct ticket filing (with location)
+    loc = db_session.query(Location).first()
+    ticket_payload = {
+        "message": "Water is leaking from the ceiling",
+        "location_id": loc.id
+    }
+    response = client.post("/chat", json=ticket_payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["type"] == "ticket_created"
+    assert "ticket_id" in data
+    assert data["department"] == "Maintenance"
+    assert "hours" in data["estimated_resolution"]
+
+
 
 
