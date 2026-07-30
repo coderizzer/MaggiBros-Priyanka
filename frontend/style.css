@@ -859,6 +859,7 @@ body {
     align-items: center;
     justify-content: center;
     transition: var(--transition);
+    z-index: 5;
 }
 
 .heatmap-overlay-pin::after {
