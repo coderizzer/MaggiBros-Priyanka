@@ -100,7 +100,8 @@ def seed_demo_data():
         {"name": "Academic Block-1", "block": "Block 1", "latitude": 23.2618, "longitude": 77.4105},
         {"name": "Academic Block-2", "block": "Block 1", "latitude": 23.2620, "longitude": 77.4100},
         {"name": "Boys Playground", "block": "Outdoor", "latitude": 23.2585, "longitude": 77.4140},
-        {"name": "Special Building", "block": "Gate 2", "latitude": 23.2590, "longitude": 77.4115}
+        {"name": "Special Building", "block": "Gate 2", "latitude": 23.2590, "longitude": 77.4115},
+        {"name": "Lab Complex", "block": "Block 2", "latitude": 23.2625, "longitude": 77.4095}
     ]
     locations = {}
     for loc in locations_data:
