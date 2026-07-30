@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CampusPilot — AI Campus Operations & Command Center</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Style -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo">
+                    <i class="fa-solid fa-compass-drafting brand-icon"></i>
+                </div>
+                <div class="brand-info">
+                    <h2>CampusPilot</h2>
+                    <span>Operations Hub</span>
+                </div>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-item active" data-tab="chat">
+                    <i class="fa-solid fa-message"></i>
+                    <span>AI Copilot</span>
+                </button>
+                <button class="nav-item" data-tab="dashboard">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" data-tab="tickets">
+                    <i class="fa-solid fa-ticket"></i>
+                    <span>Tickets Manager</span>
+                </button>
+                <button class="nav-item" data-tab="knowledge">
+                    <i class="fa-solid fa-book-bookmark"></i>
+                    <span>Knowledge Base</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="status-indicator">
+                    <span class="pulse-dot"></span>
+                    <span id="backend-status">Connecting to Backend...</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Screen 1: AI Copilot Chat -->
+            <section id="chat-tab" class="tab-content active">
+                <header class="section-header">
+                    <div>
+                        <h1>AI Campus Copilot</h1>
+                        <p>Ask questions about campus guidelines or file operational complaints directly.</p>
+                    </div>
+                </header>
+
+                <div class="chat-container">
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="message assistant">
+                            <div class="message-bubble">
+                                <p>Hello! I am your CampusPilot Assistant. How can I help you today? You can ask about university policies (RAG FAQ), report a complaint (e.g., wifi down, water leakage), or track existing tickets.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input panel -->
+                    <div class="chat-input-panel">
+                        <!-- Location selector modal overlay inside chat -->
+                        <div class="location-picker-overlay hidden" id="location-picker">
+                            <div class="location-picker-card">
+                                <h3><i class="fa-solid fa-location-dot"></i> Select Location</h3>
+                                <p>To submit your complaint, please select the matching campus location:</p>
+                                <div class="location-grid" id="location-grid">
+                                    <!-- Populated dynamically -->
+                                </div>
+                                <button class="btn btn-secondary btn-close-location" onclick="cancelComplaintFiling()">Cancel</button>
+                            </div>
+                        </div>
+
+                        <div class="chat-input-row">
+                            <input type="text" id="chat-input" placeholder="Type your message here... (e.g., 'Water is leaking in Hostel B washroom')" autocomplete="off">
+                            <button id="btn-send" class="btn btn-primary">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 2: Dashboard Analytics -->
+            <section id="dashboard-tab" class="tab-content">
+                <header class="section-header">
+                    <div>
+                        <h1>Operations Dashboard</h1>
+                        <p>Real-time analytics and hotspots across VIT Bhopal campus.</p>
+                    </div>
+                    <button class="btn btn-secondary" onclick="refreshDashboard()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                </header>
+
+                <!-- Metrics Grid -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span>Total Tickets</span>
+                            <i class="fa-solid fa-folder-open text-primary"></i>
+                        </div>
+                        <div class="metric-value" id="metric-total">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span>Open Tickets</span>
+                            <i class="fa-solid fa-triangle-exclamation text-warning"></i>
+                        </div>
+                        <div class="metric-value" id="metric-open">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span>Resolved Today</span>
+                            <i class="fa-solid fa-circle-check text-success"></i>
+                        </div>
+                        <div class="metric-value" id="metric-resolved">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span>Avg SLA Time</span>
+                            <i class="fa-solid fa-clock text-info"></i>
+                        </div>
+                        <div class="metric-value" id="metric-sla">0.0h</div>
+                    </div>
+                </div>
+
+                <div class="dashboard-details">
+                    <!-- Dynamic insights panel -->
+                    <div class="dashboard-panel insights-panel">
+                        <h3><i class="fa-solid fa-brain text-purple"></i> AI Operational Insights</h3>
+                        <div class="insights-list" id="insights-list">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Campus heatmap representation -->
+                    <div class="dashboard-panel map-panel">
+                        <h3><i class="fa-solid fa-map-location-dot text-indigo"></i> Campus Heatmap Hotspots</h3>
+                        <div class="heatmap-list" id="heatmap-list">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 3: Tickets Manager -->
+            <section id="tickets-tab" class="tab-content">
+                <header class="section-header">
+                    <div>
+                        <h1>Tickets Manager</h1>
+                        <p>Track, resolve, and re-route registered tickets.</p>
+                    </div>
+                </header>
+
+                <div class="tickets-container">
+                    <div class="tickets-filter-bar">
+                        <div class="search-box">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="ticket-search" placeholder="Search by ID or description...">
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="tickets-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Category</th>
+                                    <th>Priority</th>
+                                    <th>Department</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tickets-tbody">
+                                <!-- Loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Admin Action Modal -->
+                <div class="modal-overlay hidden" id="ticket-modal">
+                    <div class="modal-card">
+                        <div class="modal-header">
+                            <h3 id="modal-title">Edit Ticket</h3>
+                            <button class="btn-close" onclick="closeTicketModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="modal-form">
+                                <input type="hidden" id="modal-ticket-id">
+                                <div class="form-group">
+                                    <label for="modal-status">Update Status</label>
+                                    <select id="modal-status" class="form-control">
+                                        <option value="OPEN">OPEN</option>
+                                        <option value="IN_PROGRESS">IN PROGRESS</option>
+                                        <option value="RESOLVED">RESOLVED</option>
+                                        <option value="CLOSED">CLOSED</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="modal-dept">Re-route Department</label>
+                                    <select id="modal-dept" class="form-control">
+                                        <!-- Loaded dynamically -->
+                                    </select>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="closeTicketModal()">Cancel</button>
+                            <button class="btn btn-primary" onclick="saveTicketChanges()">Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 4: Knowledge Base -->
+            <section id="knowledge-tab" class="tab-content">
+                <header class="section-header">
+                    <div>
+                        <h1>RAG Knowledge Base</h1>
+                        <p>Search university academic calendar guidelines and student handbooks.</p>
+                    </div>
+                </header>
+
+                <div class="knowledge-container">
+                    <div class="search-panel">
+                        <div class="search-input-row">
+                            <input type="text" id="knowledge-search-input" placeholder="Type a search query... (e.g. 'revaluation deadlines')">
+                            <button class="btn btn-primary" onclick="searchKnowledgeBase()">
+                                <i class="fa-solid fa-search"></i> Search
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="knowledge-results" id="knowledge-results">
+                        <div class="placeholder-results">
+                            <i class="fa-solid fa-folder-open text-muted"></i>
+                            <p>Enter a query above to retrieve relevant university document chunks.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <!-- Main JS -->
+    <script src="app.js"></script>
+</body>
+</html>
