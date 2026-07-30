@@ -61,7 +61,7 @@ def client(db_session):
 def test_read_root(client):
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json()["status"] == "online"
+    assert "<!DOCTYPE html>" in response.text
 
 def test_get_departments(client):
     response = client.get("/api/departments")

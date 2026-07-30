@@ -2,6 +2,7 @@ import os
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from backend.app.config import settings
 from backend.app.database.connection import engine, Base
 from backend.app.api.tickets import router as tickets_router
@@ -53,14 +54,6 @@ app.include_router(workflow_router, prefix="/api")
 app.include_router(knowledge_router, prefix="/api")
 app.include_router(chat_router)
 
-@app.get("/")
-def read_root():
-    return {
-        "status": "online",
-        "service": "CampusPilot API",
-        "docs_url": "/docs"
-    }
-
 @app.get("/health")
 def health_check():
     # Simple check on settings configurations
@@ -71,3 +64,6 @@ def health_check():
         "ai_provider": settings.AI_PROVIDER,
         "ai_model": settings.AI_MODEL_NAME
     }
+
+# Mount static frontend root folder at very bottom to serve as fallback
+app.mount("/", StaticFiles(directory="frontend", html=True), name="static")
