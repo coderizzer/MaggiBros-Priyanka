@@ -273,15 +273,30 @@ async function fetchTickets() {
 function populateTicketsTable(tickets) {
     const tbody = document.getElementById("tickets-tbody");
     
+    // Sort priority-wise: CRITICAL (highest) -> HIGH -> MEDIUM -> LOW
+    const priorityWeights = {
+        "CRITICAL": 4,
+        "HIGH": 3,
+        "MEDIUM": 2,
+        "LOW": 1
+    };
+    
+    tickets.sort((a, b) => {
+        const weightA = priorityWeights[a.priority.toUpperCase()] || 0;
+        const weightB = priorityWeights[b.priority.toUpperCase()] || 0;
+        return weightB - weightA;
+    });
+    
     tbody.innerHTML = tickets.map(t => {
         const deptName = t.department ? t.department.name : "Unassigned";
         const badgeClass = `badge-${t.status.toLowerCase().replace('_', '')}`;
+        const prioClass = `priority-${t.priority.toLowerCase()}`;
         return `
             <tr>
                 <td>#${t.id}</td>
                 <td><strong>${t.title}</strong></td>
                 <td>${t.complaint ? t.complaint.category.replace('_', ' ').toUpperCase() : "GENERAL"}</td>
-                <td>${t.priority}</td>
+                <td><span class="badge ${prioClass}">${t.priority}</span></td>
                 <td>${deptName}</td>
                 <td><span class="badge ${badgeClass}">${t.status}</span></td>
                 <td>

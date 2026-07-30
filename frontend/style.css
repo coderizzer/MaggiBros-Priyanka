@@ -598,6 +598,12 @@ body {
 .badge-resolved { background-color: rgba(16, 185, 129, 0.1); color: var(--success); }
 .badge-closed { background-color: rgba(148, 163, 184, 0.1); color: var(--text-muted); }
 
+/* Priority Colors */
+.priority-critical { background-color: rgba(239, 68, 68, 0.18); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.4); }
+.priority-high { background-color: rgba(249, 115, 22, 0.15); color: #f97316; border: 1px solid rgba(249, 115, 22, 0.35); }
+.priority-medium { background-color: rgba(234, 179, 8, 0.15); color: var(--warning); border: 1px solid rgba(234, 179, 8, 0.35); }
+.priority-low { background-color: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.35); }
+
 /* Knowledge Search RAG Output panels */
 .knowledge-container {
     display: flex;
