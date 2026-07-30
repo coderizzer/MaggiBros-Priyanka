@@ -94,13 +94,13 @@ def seed_demo_data():
     
     # 2. Re-seed default Locations (block is required)
     locations_data = [
-        {"name": "Hostel A", "block": "Block A", "latitude": 23.2599, "longitude": 77.4126},
-        {"name": "Hostel B", "block": "Block B", "latitude": 23.2605, "longitude": 77.4132},
-        {"name": "Library", "block": "Central Block", "latitude": 23.2612, "longitude": 77.4110},
-        {"name": "Academic Block", "block": "Block 1", "latitude": 23.2618, "longitude": 77.4105},
-        {"name": "Exam Cell", "block": "Block 1", "latitude": 23.2620, "longitude": 77.4100},
-        {"name": "Sports Complex", "block": "Outdoor", "latitude": 23.2585, "longitude": 77.4140},
-        {"name": "Parking", "block": "Gate 2", "latitude": 23.2590, "longitude": 77.4115}
+        {"name": "Girls Hostel", "block": "Block A", "latitude": 23.2599, "longitude": 77.4126},
+        {"name": "Boys Hostel Blocks", "block": "Block B", "latitude": 23.2605, "longitude": 77.4132},
+        {"name": "Hostel Office", "block": "Central Block", "latitude": 23.2612, "longitude": 77.4110},
+        {"name": "Academic Block-1", "block": "Block 1", "latitude": 23.2618, "longitude": 77.4105},
+        {"name": "Academic Block-2", "block": "Block 1", "latitude": 23.2620, "longitude": 77.4100},
+        {"name": "Boys Playground", "block": "Outdoor", "latitude": 23.2585, "longitude": 77.4140},
+        {"name": "Special Building", "block": "Gate 2", "latitude": 23.2590, "longitude": 77.4115}
     ]
     locations = {}
     for loc in locations_data:
@@ -114,23 +114,23 @@ def seed_demo_data():
     # Track distributions
     total_generated = 0
     
-    # A. Seed Target Specific Distribution for Hostel B:
+    # A. Seed Target Specific Distribution for Boys Hostel Blocks:
     # Water leakage: 17, WiFi: 8, Electricity: 4, Cleanliness: 2
-    hostel_b = locations["Hostel B"]
-    hostel_b_targets = [
+    hotspot_loc = locations["Boys Hostel Blocks"]
+    hotspot_targets = [
         ("water_leakage", 17),
         ("wifi", 8),
         ("electricity", 4),
         ("cleanliness", 2)
     ]
     
-    for category, count in hostel_b_targets:
+    for category, count in hotspot_targets:
         for _ in range(count):
-            _create_historic_complaint(db, hostel_b, category, user_id=random.randint(10, 200))
+            _create_historic_complaint(db, hotspot_loc, category, user_id=random.randint(10, 200))
             total_generated += 1
             
     # B. Generate the remaining ~80-100 random tickets across other locations
-    other_locations = [locations[name] for name in locations if name != "Hostel B"]
+    other_locations = [locations[name] for name in locations if name != "Boys Hostel Blocks"]
     categories_list = list(COMPLAINT_TEMPLATES.keys())
     
     remaining_to_generate = random.randint(80, 100)
