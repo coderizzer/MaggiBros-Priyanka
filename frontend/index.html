@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CampusPilot — AI Campus Operations & Command Center</title>
+    <title>CampusPilot — Campus Operations Command Center</title>
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,163 +19,240 @@
         <aside class="sidebar">
             <div class="brand">
                 <div class="brand-logo">
-                    <i class="fa-solid fa-compass-drafting brand-icon"></i>
+                    <i class="fa-solid fa-rocket brand-icon"></i>
                 </div>
                 <div class="brand-info">
                     <h2>CampusPilot</h2>
-                    <span>Operations Hub</span>
                 </div>
             </div>
             
             <nav class="nav-menu">
-                <button class="nav-item active" data-tab="chat">
-                    <i class="fa-solid fa-message"></i>
-                    <span>AI Copilot</span>
-                </button>
-                <button class="nav-item" data-tab="dashboard">
-                    <i class="fa-solid fa-chart-line"></i>
+                <button class="nav-item active" data-tab="dashboard">
+                    <i class="fa-solid fa-grid-2-dash"></i>
+                    <i class="fa-solid fa-table-columns"></i>
                     <span>Dashboard</span>
                 </button>
                 <button class="nav-item" data-tab="tickets">
                     <i class="fa-solid fa-ticket"></i>
-                    <span>Tickets Manager</span>
+                    <span>Tickets</span>
                 </button>
-                <button class="nav-item" data-tab="knowledge">
-                    <i class="fa-solid fa-book-bookmark"></i>
-                    <span>Knowledge Base</span>
+                <button class="nav-item" data-tab="operations">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Operations</span>
+                </button>
+                <button class="nav-item" data-tab="insights">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>Insights</span>
+                </button>
+                <button class="nav-item" data-tab="analytics">
+                    <i class="fa-solid fa-chart-simple"></i>
+                    <span>Analytics</span>
+                </button>
+                <button class="nav-item" data-tab="settings">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Settings</span>
+                </button>
+                <button class="nav-item" data-tab="support">
+                    <i class="fa-solid fa-headset"></i>
+                    <span>Support</span>
                 </button>
             </nav>
 
             <div class="sidebar-footer">
                 <div class="status-indicator">
                     <span class="pulse-dot"></span>
-                    <span id="backend-status">Connecting to Backend...</span>
+                    <span id="backend-status">Operations Online</span>
                 </div>
             </div>
         </aside>
 
-        <!-- Main Content Area -->
-        <main class="main-content">
-            <!-- Screen 1: AI Copilot Chat -->
-            <section id="chat-tab" class="tab-content active">
-                <header class="section-header">
-                    <div>
-                        <h1>AI Campus Copilot</h1>
-                        <p>Ask questions about campus guidelines or file operational complaints directly.</p>
+        <!-- Main Workspace Area -->
+        <div class="main-workspace">
+            <!-- Global Header -->
+            <header class="top-header">
+                <h1 id="view-title">Dashboard</h1>
+                <div class="user-profile">
+                    <div class="user-info">
+                        <span class="user-welcome">Welcome,</span>
+                        <span class="user-name">Administrator</span>
                     </div>
-                </header>
-
-                <div class="chat-container">
-                    <div class="chat-messages" id="chat-messages">
-                        <div class="message assistant">
-                            <div class="message-bubble">
-                                <p>Hello! I am your CampusPilot Assistant. How can I help you today? You can ask about university policies (RAG FAQ), report a complaint (e.g., wifi down, water leakage), or track existing tickets.</p>
-                            </div>
-                        </div>
+                    <div class="avatar">
+                        <i class="fa-solid fa-user"></i>
                     </div>
+                </div>
+            </header>
 
-                    <!-- Input panel -->
-                    <div class="chat-input-panel">
-                        <!-- Location selector modal overlay inside chat -->
-                        <div class="location-picker-overlay hidden" id="location-picker">
-                            <div class="location-picker-card">
-                                <h3><i class="fa-solid fa-location-dot"></i> Select Location</h3>
-                                <p>To submit your complaint, please select the matching campus location:</p>
-                                <div class="location-grid" id="location-grid">
-                                    <!-- Populated dynamically -->
+            <!-- Screen 1: Dashboard Panel Layout -->
+            <div id="dashboard-view" class="view-content active">
+                <div class="dashboard-grid">
+                    <!-- Left Column: Metrics & Insights -->
+                    <div class="dash-left-column">
+                        <!-- Metrics Grid -->
+                        <div class="metrics-grid">
+                            <!-- 1. Total Tickets -->
+                            <div class="metric-card">
+                                <div class="metric-card-header">
+                                    <span class="metric-title">Total Tickets</span>
+                                    <div class="metric-icon-wrapper purple">
+                                        <i class="fa-regular fa-comment-dots"></i>
+                                    </div>
                                 </div>
-                                <button class="btn btn-secondary btn-close-location" onclick="cancelComplaintFiling()">Cancel</button>
+                                <div class="metric-body">
+                                    <span class="metric-number" id="metric-total">116</span>
+                                </div>
+                                <div class="sparkline-wrapper">
+                                    <svg viewBox="0 0 100 25" class="sparkline">
+                                        <path d="M0,20 Q15,10 30,18 T60,5 T90,15 L100,10" fill="none" stroke="#6366f1" stroke-width="2.5"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            
+                            <!-- 2. Open Tickets -->
+                            <div class="metric-card">
+                                <div class="metric-card-header">
+                                    <span class="metric-title">Open Tickets</span>
+                                    <div class="metric-icon-wrapper red">
+                                        <i class="fa-regular fa-clipboard"></i>
+                                    </div>
+                                </div>
+                                <div class="metric-body">
+                                    <span class="metric-number" id="metric-open">12</span>
+                                </div>
+                                <div class="sparkline-wrapper">
+                                    <svg viewBox="0 0 100 25" class="sparkline">
+                                        <path d="M0,18 Q20,22 40,10 T80,12 T100,5" fill="none" stroke="#ef4444" stroke-width="2.5"></path>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <!-- 3. In Progress -->
+                            <div class="metric-card">
+                                <div class="metric-card-header">
+                                    <span class="metric-title">In Progress</span>
+                                    <div class="metric-icon-wrapper blue">
+                                        <i class="fa-solid fa-history"></i>
+                                    </div>
+                                </div>
+                                <div class="metric-body">
+                                    <span class="metric-number" id="metric-progress">68</span>
+                                </div>
+                                <div class="sparkline-wrapper">
+                                    <svg viewBox="0 0 100 25" class="sparkline">
+                                        <path d="M0,12 Q25,5 50,18 T75,8 T100,20" fill="none" stroke="#06b6d4" stroke-width="2.5"></path>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <!-- 4. Resolved -->
+                            <div class="metric-card">
+                                <div class="metric-card-header">
+                                    <span class="metric-title">Resolved</span>
+                                    <div class="metric-icon-wrapper green">
+                                        <i class="fa-regular fa-circle-check"></i>
+                                    </div>
+                                </div>
+                                <div class="metric-body">
+                                    <span class="metric-number" id="metric-resolved">36</span>
+                                </div>
+                                <div class="sparkline-wrapper">
+                                    <svg viewBox="0 0 100 25" class="sparkline">
+                                        <path d="M0,22 Q15,8 30,12 T70,5 T100,15" fill="none" stroke="#10b981" stroke-width="2.5"></path>
+                                    </svg>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="chat-input-row">
-                            <input type="text" id="chat-input" placeholder="Type your message here... (e.g., 'Water is leaking in Hostel B washroom')" autocomplete="off">
-                            <button id="btn-send" class="btn btn-primary">
-                                <i class="fa-solid fa-paper-plane"></i>
-                            </button>
+                        <!-- AI-Powered Operations Insights -->
+                        <div class="insights-container">
+                            <h3>AI-Powered Operations Insights</h3>
+                            <div class="insights-list" id="insights-list">
+                                <!-- Insight 1 -->
+                                <div class="insight-item critical">
+                                    <div class="insight-header">
+                                        <span class="insight-title">Hostel B Issue Spike</span>
+                                        <span class="insight-time">2 mins ago</span>
+                                    </div>
+                                    <p class="insight-desc">High activity detected (water usage, noise). Investigation initiated.</p>
+                                </div>
+                                <!-- Insight 2 -->
+                                <div class="insight-item warning">
+                                    <div class="insight-header">
+                                        <span class="insight-title">Dining Hall Queue Delay</span>
+                                        <span class="insight-time">8 mins ago</span>
+                                    </div>
+                                    <p class="insight-desc">Increased wait time noted at Student Union. Staff alerted.</p>
+                                </div>
+                                <!-- Insight 3 -->
+                                <div class="insight-item info">
+                                    <div class="insight-header">
+                                        <span class="insight-title">Parking Lot A Capacity</span>
+                                        <span class="insight-time">15 mins ago</span>
+                                    </div>
+                                    <p class="insight-desc">Reaching 95% occupancy. Rerouting traffic.</p>
+                                </div>
+                                <!-- Insight 4 -->
+                                <div class="insight-item success">
+                                    <div class="insight-header">
+                                        <span class="insight-title">Campus WiFi Latency</span>
+                                        <span class="insight-time">22 mins ago</span>
+                                    </div>
+                                    <p class="insight-desc">Slight latency observed in Library West. Diagnostic running.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Map & Status -->
+                    <div class="dash-right-column">
+                        <!-- Campus Map -->
+                        <div class="map-card">
+                            <div class="map-header">
+                                <h3>Campus Map</h3>
+                                <button class="btn-interactive">Interactive</button>
+                            </div>
+                            <div class="map-vector-container">
+                                <!-- Minimalist Campus Map Graphic SVG -->
+                                <svg viewBox="0 0 300 200" class="map-svg">
+                                    <!-- Simplified building layouts -->
+                                    <rect x="20" y="30" width="60" height="40" rx="4" fill="#2d3748" opacity="0.4"></rect>
+                                    <rect x="110" y="20" width="80" height="50" rx="4" fill="#2d3748" opacity="0.4"></rect>
+                                    <rect x="210" y="35" width="70" height="45" rx="4" fill="#2d3748" opacity="0.4"></rect>
+                                    <rect x="40" y="110" width="90" height="60" rx="4" fill="#2d3748" opacity="0.4"></rect>
+                                    <rect x="160" y="120" width="110" height="50" rx="4" fill="#2d3748" opacity="0.4"></rect>
+                                    <!-- Paths/Streets -->
+                                    <path d="M 0,90 L 300,90" stroke="#1e293b" stroke-width="6" fill="none" opacity="0.8"></path>
+                                    <path d="M 100,0 L 100,200" stroke="#1e293b" stroke-width="4" fill="none" opacity="0.8"></path>
+                                    <path d="M 200,0 L 200,200" stroke="#1e293b" stroke-width="4" fill="none" opacity="0.8"></path>
+                                    
+                                    <!-- Map Markers -->
+                                    <circle cx="50" cy="50" r="5" fill="#8b5cf6" class="glowing-marker"></circle>
+                                    <circle cx="150" cy="45" r="5" fill="#8b5cf6" class="glowing-marker"></circle>
+                                    <circle cx="245" cy="55" r="5" fill="#8b5cf6" class="glowing-marker"></circle>
+                                    <circle cx="85" cy="140" r="5" fill="#10b981" class="glowing-marker-green"></circle>
+                                    <circle cx="215" cy="145" r="5" fill="#ef4444" class="glowing-marker-red"></circle>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Campus Status -->
+                        <div class="status-card">
+                            <h3>Campus Status</h3>
+                            <span class="status-ok">All Systems Operational</span>
+                            <span class="status-sub">98% Uptime</span>
                         </div>
                     </div>
                 </div>
-            </section>
+            </div>
 
-            <!-- Screen 2: Dashboard Analytics -->
-            <section id="dashboard-tab" class="tab-content">
-                <header class="section-header">
-                    <div>
-                        <h1>Operations Dashboard</h1>
-                        <p>Real-time analytics and hotspots across VIT Bhopal campus.</p>
-                    </div>
-                    <button class="btn btn-secondary" onclick="refreshDashboard()"><i class="fa-solid fa-rotate"></i> Refresh</button>
-                </header>
-
-                <!-- Metrics Grid -->
-                <div class="metrics-grid">
-                    <div class="metric-card">
-                        <div class="metric-header">
-                            <span>Total Tickets</span>
-                            <i class="fa-solid fa-folder-open text-primary"></i>
-                        </div>
-                        <div class="metric-value" id="metric-total">0</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-header">
-                            <span>Open Tickets</span>
-                            <i class="fa-solid fa-triangle-exclamation text-warning"></i>
-                        </div>
-                        <div class="metric-value" id="metric-open">0</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-header">
-                            <span>Resolved Today</span>
-                            <i class="fa-solid fa-circle-check text-success"></i>
-                        </div>
-                        <div class="metric-value" id="metric-resolved">0</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-header">
-                            <span>Avg SLA Time</span>
-                            <i class="fa-solid fa-clock text-info"></i>
-                        </div>
-                        <div class="metric-value" id="metric-sla">0.0h</div>
-                    </div>
-                </div>
-
-                <div class="dashboard-details">
-                    <!-- Dynamic insights panel -->
-                    <div class="dashboard-panel insights-panel">
-                        <h3><i class="fa-solid fa-brain text-purple"></i> AI Operational Insights</h3>
-                        <div class="insights-list" id="insights-list">
-                            <!-- Populated dynamically -->
-                        </div>
-                    </div>
-
-                    <!-- Campus heatmap representation -->
-                    <div class="dashboard-panel map-panel">
-                        <h3><i class="fa-solid fa-map-location-dot text-indigo"></i> Campus Heatmap Hotspots</h3>
-                        <div class="heatmap-list" id="heatmap-list">
-                            <!-- Populated dynamically -->
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Screen 3: Tickets Manager -->
-            <section id="tickets-tab" class="tab-content">
-                <header class="section-header">
-                    <div>
-                        <h1>Tickets Manager</h1>
-                        <p>Track, resolve, and re-route registered tickets.</p>
-                    </div>
-                </header>
-
+            <!-- Screen 2: Tickets Management View -->
+            <div id="tickets-view" class="view-content">
                 <div class="tickets-container">
                     <div class="tickets-filter-bar">
                         <div class="search-box">
                             <i class="fa-solid fa-magnifying-glass"></i>
-                            <input type="text" id="ticket-search" placeholder="Search by ID or description...">
+                            <input type="text" id="ticket-search" placeholder="Search by description or ID...">
                         </div>
                     </div>
-
                     <div class="table-responsive">
                         <table class="tickets-table">
                             <thead>
@@ -195,71 +272,140 @@
                         </table>
                     </div>
                 </div>
+            </div>
 
-                <!-- Admin Action Modal -->
-                <div class="modal-overlay hidden" id="ticket-modal">
-                    <div class="modal-card">
-                        <div class="modal-header">
-                            <h3 id="modal-title">Edit Ticket</h3>
-                            <button class="btn-close" onclick="closeTicketModal()">&times;</button>
-                        </div>
-                        <div class="modal-body">
-                            <form id="modal-form">
-                                <input type="hidden" id="modal-ticket-id">
-                                <div class="form-group">
-                                    <label for="modal-status">Update Status</label>
-                                    <select id="modal-status" class="form-control">
-                                        <option value="OPEN">OPEN</option>
-                                        <option value="IN_PROGRESS">IN PROGRESS</option>
-                                        <option value="RESOLVED">RESOLVED</option>
-                                        <option value="CLOSED">CLOSED</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="modal-dept">Re-route Department</label>
-                                    <select id="modal-dept" class="form-control">
-                                        <!-- Loaded dynamically -->
-                                    </select>
-                                </div>
-                            </form>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-secondary" onclick="closeTicketModal()">Cancel</button>
-                            <button class="btn btn-primary" onclick="saveTicketChanges()">Save Changes</button>
-                        </div>
+            <!-- View 3: Operations (Fallbacks) -->
+            <div id="operations-view" class="view-content">
+                <div class="fallback-frame">
+                    <i class="fa-solid fa-gears fallback-icon"></i>
+                    <h2>System Operations</h2>
+                    <p>Operational configs are running normally within standard sandboxed environments.</p>
+                </div>
+            </div>
+
+            <!-- View 4: Insights Dashboard Details -->
+            <div id="insights-view" class="view-content">
+                <div class="fallback-frame">
+                    <i class="fa-solid fa-brain fallback-icon"></i>
+                    <h2>AI Insights Engine</h2>
+                    <p>Persisted dashboard insights analyze real-time ticket logs across active semesters.</p>
+                </div>
+            </div>
+
+            <!-- View 5: Analytics Charts -->
+            <div id="analytics-view" class="view-content">
+                <div class="fallback-frame">
+                    <i class="fa-solid fa-chart-line fallback-icon"></i>
+                    <h2>Analytics & Metric Trends</h2>
+                    <p>Statistical distribution summaries are compiled from SQLite records.</p>
+                </div>
+            </div>
+
+            <!-- View 6: Settings panel -->
+            <div id="settings-view" class="view-content">
+                <div class="fallback-frame">
+                    <i class="fa-solid fa-sliders fallback-icon"></i>
+                    <h2>System Settings</h2>
+                    <p>Adjust API providers, model parameters, and database parameters.</p>
+                </div>
+            </div>
+
+            <!-- View 7: Support frames -->
+            <div id="support-view" class="view-content">
+                <div class="fallback-frame">
+                    <i class="fa-solid fa-headset fallback-icon"></i>
+                    <h2>Help & Operations Support</h2>
+                    <p>Contact VIT Bhopal Campus administrators for physical emergency alerts.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating Chat Copilot Window (Bottom-Right) -->
+        <div class="chat-copilot-window" id="chat-copilot">
+            <header class="chat-window-header">
+                <div class="chat-header-title">
+                    <i class="fa-solid fa-circle-nodes text-primary"></i>
+                    <span>AI Chat Copilot</span>
+                </div>
+                <div class="chat-header-actions">
+                    <i class="fa-solid fa-minus chat-action-btn"></i>
+                    <i class="fa-solid fa-xmark chat-action-btn" onclick="toggleChatWindow()"></i>
+                </div>
+            </header>
+
+            <div class="chat-body" id="chat-messages">
+                <div class="message assistant">
+                    <div class="message-bubble">
+                        <p><strong>CampusPilot Copilot</strong><br>How can I assist you today?</p>
                     </div>
                 </div>
-            </section>
-
-            <!-- Screen 4: Knowledge Base -->
-            <section id="knowledge-tab" class="tab-content">
-                <header class="section-header">
-                    <div>
-                        <h1>RAG Knowledge Base</h1>
-                        <p>Search university academic calendar guidelines and student handbooks.</p>
-                    </div>
-                </header>
-
-                <div class="knowledge-container">
-                    <div class="search-panel">
-                        <div class="search-input-row">
-                            <input type="text" id="knowledge-search-input" placeholder="Type a search query... (e.g. 'revaluation deadlines')">
-                            <button class="btn btn-primary" onclick="searchKnowledgeBase()">
-                                <i class="fa-solid fa-search"></i> Search
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="knowledge-results" id="knowledge-results">
-                        <div class="placeholder-results">
-                            <i class="fa-solid fa-folder-open text-muted"></i>
-                            <p>Enter a query above to retrieve relevant university document chunks.</p>
-                        </div>
+                <div class="message user">
+                    <div class="message-bubble">
+                        <p><strong>Admin</strong><br>Show details for Hostel B Issue.</p>
                     </div>
                 </div>
-            </section>
-        </main>
+                <div class="message assistant">
+                    <div class="message-bubble">
+                        <p><strong>Copilot</strong><br>Analysing: Hostel B reports high temperature and utility issues in Block 3. Maintenance dispatched.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location picker Modal Overlay inside Chat Frame -->
+            <div class="location-picker-overlay hidden" id="location-picker">
+                <div class="location-picker-card">
+                    <h3><i class="fa-solid fa-location-dot"></i> Select Location</h3>
+                    <p>To submit your complaint, please select the matching campus location:</p>
+                    <div class="location-grid" id="location-grid">
+                        <!-- Loaded dynamically -->
+                    </div>
+                    <button class="btn btn-secondary btn-close-location" onclick="cancelComplaintFiling()">Cancel</button>
+                </div>
+            </div>
+
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off">
+                <button class="chat-send-btn" id="btn-send">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Admin Action Modal -->
+        <div class="modal-overlay hidden" id="ticket-modal">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3 id="modal-title">Edit Ticket</h3>
+                    <button class="btn-close" onclick="closeTicketModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="modal-form">
+                        <input type="hidden" id="modal-ticket-id">
+                        <div class="form-group">
+                            <label for="modal-status">Update Status</label>
+                            <select id="modal-status" class="form-control">
+                                <option value="OPEN">OPEN</option>
+                                <option value="IN_PROGRESS">IN PROGRESS</option>
+                                <option value="RESOLVED">RESOLVED</option>
+                                <option value="CLOSED">CLOSED</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="modal-dept">Re-route Department</label>
+                            <select id="modal-dept" class="form-control">
+                                <!-- Loaded dynamically -->
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeTicketModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="saveTicketChanges()">Save Changes</button>
+                </div>
+            </div>
+        </div>
     </div>
+
     <!-- Main JS -->
     <script src="app.js"></script>
 </body>
