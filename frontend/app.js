@@ -40,37 +40,51 @@ document.addEventListener("DOMContentLoaded", () => {
 // 1. Navigation Tab Controller
 function initNavigation() {
     const navItems = document.querySelectorAll(".nav-item");
-    const views = document.querySelectorAll(".view-content");
-    const titleEl = document.getElementById("view-title");
-
     navItems.forEach(item => {
         item.addEventListener("click", () => {
             const targetTab = item.getAttribute("data-tab");
-            
-            navItems.forEach(nav => nav.classList.remove("active"));
-            views.forEach(view => view.classList.remove("active"));
-            
-            item.classList.add("active");
-            
-            // Show corresponding view
-            const targetView = document.getElementById(`${targetTab}-view`);
-            if (targetView) {
-                targetView.classList.add("active");
-            }
-            
-            // Update Title
-            if (titleEl) {
-                titleEl.textContent = targetTab.charAt(0).toUpperCase() + targetTab.slice(1);
-            }
-            
-            // Screen specific loads
-            if (targetTab === "dashboard") {
-                refreshDashboard();
-            } else if (targetTab === "tickets") {
-                fetchTickets();
-            }
+            switchTab(targetTab);
         });
     });
+}
+
+function switchTab(targetTab) {
+    const navItems = document.querySelectorAll(".nav-item");
+    const views = document.querySelectorAll(".view-content");
+    const titleEl = document.getElementById("view-title");
+
+    navItems.forEach(nav => {
+        if (nav.getAttribute("data-tab") === targetTab) {
+            nav.classList.add("active");
+        } else {
+            nav.classList.remove("active");
+        }
+    });
+
+    views.forEach(view => {
+        if (view.id === `${targetTab}-view`) {
+            view.classList.add("active");
+        } else {
+            view.classList.remove("active");
+        }
+    });
+
+    // Update Title
+    if (titleEl) {
+        let cleanTitle = targetTab.replace("-", " ");
+        titleEl.textContent = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
+    }
+
+    // Screen specific loads
+    if (targetTab === "dashboard") {
+        refreshDashboard();
+    } else if (targetTab === "tickets") {
+        fetchTickets();
+    } else if (targetTab === "my-tickets") {
+        fetchStudentTickets();
+    } else if (targetTab === "analytics") {
+        renderAnalyticsBars();
+    }
 }
 
 // 2. Health Checker
@@ -98,6 +112,14 @@ async function fetchLocations() {
         if (res.ok) {
             state.locations = await res.json();
             populateLocationPicker();
+            
+            // Populate Student Raise Ticket dropdown
+            const studentLocSelect = document.getElementById("student-location");
+            if (studentLocSelect) {
+                studentLocSelect.innerHTML = state.locations.map(l => 
+                    `<option value="${l.id}">${l.name}</option>`
+                ).join("");
+            }
         }
     } catch (e) {
         console.error("Error loading locations:", e);
@@ -495,15 +517,95 @@ function closeMapModal() {
 }
 
 // Authentication Logic
+state.selectedLoginRole = "STUDENT";
+
+function selectLoginRole(role) {
+    state.selectedLoginRole = role;
+    const btnStudent = document.getElementById("btn-role-student");
+    const btnAdmin = document.getElementById("btn-role-admin");
+    const instructions = document.getElementById("login-instructions-text");
+    const localInput = document.getElementById("local-email-input");
+    
+    if (role === "STUDENT") {
+        if (btnStudent) {
+            btnStudent.style.background = "var(--primary)";
+            btnStudent.style.color = "white";
+        }
+        if (btnAdmin) {
+            btnAdmin.style.background = "none";
+            btnAdmin.style.color = "var(--text-muted)";
+        }
+        if (instructions) {
+            instructions.textContent = "Please sign in using your official student email account to file complaints and track issues.";
+        }
+        if (localInput) {
+            localInput.placeholder = "student@vitbhopal.ac.in";
+        }
+    } else {
+        if (btnAdmin) {
+            btnAdmin.style.background = "var(--primary)";
+            btnAdmin.style.color = "white";
+        }
+        if (btnStudent) {
+            btnStudent.style.background = "none";
+            btnStudent.style.color = "var(--text-muted)";
+        }
+        if (instructions) {
+            instructions.textContent = "Please sign in using your official administrator account to access the command center and manage telemetry.";
+        }
+        if (localInput) {
+            localInput.placeholder = "admin@vitbhopal.ac.in";
+        }
+    }
+}
+
 function checkLoginState() {
     const email = localStorage.getItem("user_email");
     const name = localStorage.getItem("user_name");
+    const role = localStorage.getItem("user_role") || "STUDENT";
     const overlay = document.getElementById("login-overlay");
     const profileName = document.getElementById("profile-name");
     
     if (email && email.toLowerCase().endsWith("@vitbhopal.ac.in")) {
-        if (profileName) profileName.textContent = name || "VIT Member";
+        if (profileName) profileName.textContent = `${name || "VIT Member"} (${role})`;
         if (overlay) overlay.classList.add("hidden");
+        
+        // Hide/Show items based on role
+        document.querySelectorAll(".admin-only").forEach(el => {
+            if (role === "ADMIN") el.classList.remove("hidden");
+            else el.classList.add("hidden");
+        });
+        document.querySelectorAll(".student-only").forEach(el => {
+            if (role === "STUDENT") el.classList.remove("hidden");
+            else el.classList.add("hidden");
+        });
+
+        // Hide chatbot window and fab for admin
+        const chatWindow = document.getElementById("chat-copilot");
+        const chatFab = document.getElementById("chat-fab");
+        if (role === "ADMIN") {
+            if (chatWindow) chatWindow.classList.add("hidden");
+            if (chatFab) chatFab.classList.add("hidden");
+            
+            // If currently viewing a student page, swap to dashboard
+            const activeView = document.querySelector(".view-content.active");
+            if (!activeView || activeView.classList.contains("student-only")) {
+                switchTab("dashboard");
+            }
+        } else {
+            // Student: Default chatbot minimized FAB
+            if (chatWindow && !chatWindow.classList.contains("hidden")) {
+                // Keep open
+            } else if (chatFab) {
+                chatFab.classList.remove("hidden");
+            }
+            
+            // If currently viewing an admin page, swap to raise-ticket
+            const activeView = document.querySelector(".view-content.active");
+            if (!activeView || activeView.classList.contains("admin-only")) {
+                switchTab("raise-ticket");
+            }
+        }
     } else {
         if (overlay) overlay.classList.remove("hidden");
     }
@@ -523,6 +625,7 @@ function handleGoogleSignIn(response) {
         if (email.endsWith("@vitbhopal.ac.in")) {
             localStorage.setItem("user_email", email);
             localStorage.setItem("user_name", profile.name || "VIT Member");
+            localStorage.setItem("user_role", state.selectedLoginRole || "STUDENT");
             checkLoginState();
             refreshDashboard();
             fetchTickets();
@@ -542,6 +645,7 @@ function submitLocalLogin() {
         const mockName = email.split("@")[0].replace(/[._]/g, " ").toUpperCase();
         localStorage.setItem("user_email", email);
         localStorage.setItem("user_name", mockName);
+        localStorage.setItem("user_role", state.selectedLoginRole || "STUDENT");
         checkLoginState();
         refreshDashboard();
         fetchTickets();
@@ -553,6 +657,14 @@ function submitLocalLogin() {
 function signOutUser() {
     localStorage.removeItem("user_email");
     localStorage.removeItem("user_name");
+    localStorage.removeItem("user_role");
+    
+    // Hide chat windows on logout
+    const chatWindow = document.getElementById("chat-copilot");
+    const chatFab = document.getElementById("chat-fab");
+    if (chatWindow) chatWindow.classList.add("hidden");
+    if (chatFab) chatFab.classList.add("hidden");
+    
     checkLoginState();
 }
 
@@ -674,5 +786,193 @@ function toggleLiveSync() {
                 dot.style.animation = "none";
             }
         }
+    }
+}
+
+// Student Ticket Filing & Verification Helpers
+function getUserIdFromEmail(email) {
+    if (!email) return 101;
+    let hash = 0;
+    for (let i = 0; i < email.length; i++) {
+        hash += email.charCodeAt(i);
+    }
+    return (hash % 1000) + 1;
+}
+
+async function submitStudentComplaint(event) {
+    event.preventDefault();
+    const title = document.getElementById("student-title").value.trim();
+    const desc = document.getElementById("student-desc").value.trim();
+    const category = document.getElementById("student-category").value;
+    const locationId = document.getElementById("student-location").value;
+    const priority = document.getElementById("student-priority").value;
+    
+    const email = localStorage.getItem("user_email") || "student@vitbhopal.ac.in";
+    const userId = getUserIdFromEmail(email);
+
+    try {
+        // Step 1: Create Complaint record
+        const compRes = await fetch(`${BACKEND_URL}/api/complaints`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                user_id: userId,
+                location_id: parseInt(locationId),
+                category: category,
+                description: desc,
+                priority: priority
+            })
+        });
+
+        if (!compRes.ok) throw new Error("Complaint submission failed.");
+        const complaintData = await compRes.json();
+
+        // Step 2: Spawn Ticket record
+        const tickRes = await fetch(`${BACKEND_URL}/api/tickets`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                complaint_id: complaintData.id,
+                title: title,
+                description: desc
+            })
+        });
+
+        if (!tickRes.ok) throw new Error("Ticket assignment failed.");
+        
+        // Success Alert
+        alert(`Complaint filed successfully! Ticket ID #${complaintData.id} has been registered.`);
+        
+        // Clear form inputs
+        document.getElementById("student-complaint-form").reset();
+        
+        // Dynamic switch to My Tickets tab view
+        switchTab("my-tickets");
+    } catch (e) {
+        alert(e.message || "Connection failed. Please retry.");
+    }
+}
+
+async function fetchStudentTickets() {
+    const tableBody = document.getElementById("student-tickets-table-body");
+    const countBadge = document.getElementById("student-ticket-count");
+    const email = localStorage.getItem("user_email");
+    const userId = getUserIdFromEmail(email);
+
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/tickets`);
+        if (res.ok) {
+            const tickets = await res.json();
+            
+            // Filter tickets belonging to the current user's generated ID
+            const myTickets = tickets.filter(t => t.complaint && t.complaint.user_id === userId);
+            
+            if (countBadge) countBadge.textContent = `${myTickets.length} Tickets`;
+            
+            if (!tableBody) return;
+            if (myTickets.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                            <i class="fa-solid fa-folder-open" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
+                            No complaints logged yet under this account.
+                        </td>
+                    </tr>`;
+                return;
+            }
+            
+            tableBody.innerHTML = myTickets.map(t => {
+                let priorityClass = t.priority.toLowerCase();
+                let statusClass = t.status.toLowerCase().replace('_', '-');
+                return `
+                    <tr>
+                        <td>#${t.id}</td>
+                        <td style="font-weight: 600; color: white;">${t.title}</td>
+                        <td><span class="badge category-tag">${t.complaint ? t.complaint.category.replace('_', ' ') : 'other'}</span></td>
+                        <td>${t.location ? t.location.name : 'Unassigned'}</td>
+                        <td><span class="badge priority-${priorityClass}">${t.priority}</span></td>
+                        <td><span class="badge status-${statusClass}">${t.status}</span></td>
+                        <td>${new Date(t.created_at).toLocaleDateString()}</td>
+                    </tr>`;
+            }).join("");
+        }
+    } catch (e) {
+        console.error("Failed loading student tickets:", e);
+    }
+}
+
+// Chatbot Minimizing Controls
+function minimizeChatWindow() {
+    const chatWindow = document.getElementById("chat-copilot");
+    const chatFab = document.getElementById("chat-fab");
+    
+    if (chatWindow) chatWindow.classList.add("hidden");
+    if (chatFab) chatFab.classList.remove("hidden");
+}
+
+function restoreChatWindow() {
+    const chatWindow = document.getElementById("chat-copilot");
+    const chatFab = document.getElementById("chat-fab");
+    
+    if (chatFab) chatFab.classList.add("hidden");
+    if (chatWindow) chatWindow.classList.remove("hidden");
+}
+
+// Render workload metrics graphs in Analytics panel
+async function renderAnalyticsBars() {
+    const catContainer = document.getElementById("analytics-category-bars");
+    const deptContainer = document.getElementById("analytics-department-bars");
+    if (!catContainer || !deptContainer) return;
+
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/tickets`);
+        if (!res.ok) return;
+        const tickets = await res.json();
+
+        // Calculate counts
+        const catMap = {};
+        const deptMap = {};
+        tickets.forEach(t => {
+            const catName = t.complaint ? t.complaint.category.replace('_', ' ').toUpperCase() : 'OTHER';
+            const deptName = t.department ? t.department.name : 'UNASSIGNED';
+            catMap[catName] = (catMap[catName] || 0) + 1;
+            deptMap[deptName] = (deptMap[deptName] || 0) + 1;
+        });
+
+        // Generate category workload bars html
+        const catEntries = Object.entries(catMap).sort((a,b) => b[1] - a[1]);
+        const maxCatVal = catEntries.length > 0 ? catEntries[0][1] : 1;
+        catContainer.innerHTML = catEntries.map(([name, val]) => {
+            const pct = (val / maxCatVal) * 100;
+            return `
+                <div style="margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; color: var(--text-muted);">
+                        <span>${name}</span>
+                        <span style="font-weight: 700; color: white;">${val} active</span>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.04); border-radius: 4px; overflow: hidden;">
+                        <div style="width: ${pct}%; height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 4px;"></div>
+                    </div>
+                </div>`;
+        }).join("");
+
+        // Generate department workload bars html
+        const deptEntries = Object.entries(deptMap).sort((a,b) => b[1] - a[1]);
+        const maxDeptVal = deptEntries.length > 0 ? deptEntries[0][1] : 1;
+        deptContainer.innerHTML = deptEntries.map(([name, val]) => {
+            const pct = (val / maxDeptVal) * 100;
+            return `
+                <div style="margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; color: var(--text-muted);">
+                        <span>${name}</span>
+                        <span style="font-weight: 700; color: white;">${val} tickets</span>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.04); border-radius: 4px; overflow: hidden;">
+                        <div style="width: ${pct}%; height: 100%; background: linear-gradient(90deg, #10b981, #3b82f6); border-radius: 4px;"></div>
+                    </div>
+                </div>`;
+        }).join("");
+    } catch (e) {
+        console.error("Error drawing analytics charts:", e);
     }
 }

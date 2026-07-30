@@ -29,34 +29,34 @@
             </div>
             
             <nav class="nav-menu">
-                <button class="nav-item active" data-tab="dashboard">
-                    <i class="fa-solid fa-grid-2-dash"></i>
+                <!-- Admin Tabs -->
+                <button class="nav-item active admin-only" data-tab="dashboard">
                     <i class="fa-solid fa-table-columns"></i>
                     <span>Dashboard</span>
                 </button>
-                <button class="nav-item" data-tab="tickets">
+                <button class="nav-item admin-only" data-tab="tickets">
                     <i class="fa-solid fa-ticket"></i>
-                    <span>Tickets</span>
+                    <span>Manage Tickets</span>
                 </button>
-                <button class="nav-item" data-tab="operations">
-                    <i class="fa-solid fa-gear"></i>
-                    <span>Operations</span>
-                </button>
-                <button class="nav-item" data-tab="insights">
-                    <i class="fa-solid fa-circle-info"></i>
-                    <span>Insights</span>
-                </button>
-                <button class="nav-item" data-tab="analytics">
+                <button class="nav-item admin-only" data-tab="analytics">
                     <i class="fa-solid fa-chart-simple"></i>
                     <span>Analytics</span>
                 </button>
-                <button class="nav-item" data-tab="settings">
-                    <i class="fa-solid fa-sliders"></i>
-                    <span>Settings</span>
+                
+                <!-- Student Tabs -->
+                <button class="nav-item student-only" data-tab="raise-ticket">
+                    <i class="fa-solid fa-square-plus"></i>
+                    <span>Raise Ticket</span>
                 </button>
-                <button class="nav-item" data-tab="support">
-                    <i class="fa-solid fa-headset"></i>
-                    <span>Support</span>
+                <button class="nav-item student-only" data-tab="my-tickets">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>My Tickets</span>
+                </button>
+                
+                <!-- Shared Tabs -->
+                <button class="nav-item" data-tab="insights">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>Insights</span>
                 </button>
             </nav>
 
@@ -308,48 +308,132 @@
                 </div>
             </div>
 
-            <!-- View 3: Operations (Fallbacks) -->
-            <div id="operations-view" class="view-content">
-                <div class="fallback-frame">
-                    <i class="fa-solid fa-gears fallback-icon"></i>
-                    <h2>System Operations</h2>
-                    <p>Operational configs are running normally within standard sandboxed environments.</p>
+            <!-- View 3: Student Portal — Raise Ticket -->
+            <div id="raise-ticket-view" class="view-content student-only">
+                <div class="card" style="max-width: 600px; margin: 0 auto; padding: 30px;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+                        <i class="fa-solid fa-square-plus text-primary" style="font-size: 24px;"></i>
+                        <h2 style="font-size: 20px; font-weight: 700;">Submit Campus Complaint</h2>
+                    </div>
+                    <form id="student-complaint-form" onsubmit="submitStudentComplaint(event)">
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label for="student-title" style="font-size: 12px; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 6px;">Complaint Title</label>
+                            <input type="text" id="student-title" class="form-control" placeholder="Brief summary of the issue (e.g. Water leak in washroom)" required style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: white;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label for="student-desc" style="font-size: 12px; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 6px;">Detailed Description</label>
+                            <textarea id="student-desc" class="form-control" rows="4" placeholder="Describe the problem in detail (e.g., Water is leaking from the second tap on the ground floor washroom...)" required style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: white; resize: vertical;"></textarea>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                            <div class="form-group">
+                                <label for="student-category" style="font-size: 12px; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 6px;">Category</label>
+                                <select id="student-category" class="form-control" required style="width: 100%; padding: 10px; border-radius: 8px; background: #0b0f19; border: 1px solid var(--border-color); color: white;">
+                                    <option value="water_leakage">💧 Water Leakage</option>
+                                    <option value="electricity">⚡ Electricity</option>
+                                    <option value="wifi">🌐 Wi-Fi / Network</option>
+                                    <option value="cleanliness">🧹 Hygiene / Cleaning</option>
+                                    <option value="security">🛡️ Security Alert</option>
+                                    <option value="other">⚙️ Other Issue</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="student-location" style="font-size: 12px; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 6px;">Campus Location</label>
+                                <select id="student-location" class="form-control" required style="width: 100%; padding: 10px; border-radius: 8px; background: #0b0f19; border: 1px solid var(--border-color); color: white;">
+                                    <!-- Loaded dynamically -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 24px;">
+                            <label for="student-priority" style="font-size: 12px; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 6px;">Priority Level</label>
+                            <select id="student-priority" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; background: #0b0f19; border: 1px solid var(--border-color); color: white;">
+                                <option value="LOW">🟢 LOW</option>
+                                <option value="MEDIUM" selected>🟡 MEDIUM</option>
+                                <option value="HIGH">🟠 HIGH</option>
+                                <option value="CRITICAL">🔴 CRITICAL</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i class="fa-solid fa-paper-plane"></i> File Complaint
+                        </button>
+                    </form>
                 </div>
             </div>
 
-            <!-- View 4: Insights Dashboard Details -->
+            <!-- View 4: Student Portal — My Tickets -->
+            <div id="my-tickets-view" class="view-content student-only">
+                <div class="card" style="padding: 24px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i class="fa-solid fa-list-check text-primary" style="font-size: 20px;"></i>
+                            <h2 style="font-size: 18px; font-weight: 700;">My Filed Complaints</h2>
+                        </div>
+                        <span class="badge badge-info" id="student-ticket-count">0 Tickets</span>
+                    </div>
+                    <div class="table-container" style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Category</th>
+                                    <th>Location</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Created At</th>
+                                </tr>
+                            </thead>
+                            <tbody id="student-tickets-table-body">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                                        <i class="fa-solid fa-folder-open" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
+                                        No complaints logged yet under this account.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View 5: Shared Insights & Announcements Board -->
             <div id="insights-view" class="view-content">
-                <div class="fallback-frame">
-                    <i class="fa-solid fa-brain fallback-icon"></i>
-                    <h2>AI Insights Engine</h2>
-                    <p>Persisted dashboard insights analyze real-time ticket logs across active semesters.</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="card" style="padding: 24px;">
+                        <h3 style="margin-bottom: 16px; font-weight: 700;"><i class="fa-solid fa-bullhorn text-primary"></i> Operations Bulletin</h3>
+                        <div class="insight-list" id="insights-feed-list">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                    <div class="card" style="padding: 24px;">
+                        <h3 style="margin-bottom: 16px; font-weight: 700;"><i class="fa-solid fa-info-circle text-secondary"></i> Knowledge Base Updates</h3>
+                        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 12px;">The RAG vector store indexing is synchronized with official campus guidelines. Below are top operational resources:</p>
+                        <ul style="list-style: none; display: flex; flex-direction: column; gap: 10px; padding: 0;">
+                            <li style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 12px;"><i class="fa-regular fa-file-pdf text-danger" style="margin-right: 6px;"></i> Hostel Accommodation Rules (rev_2026.pdf)</li>
+                            <li style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 12px;"><i class="fa-regular fa-file-pdf text-danger" style="margin-right: 6px;"></i> Wi-Fi Connectivity and Firewall Policy (fw_config.pdf)</li>
+                            <li style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 12px;"><i class="fa-regular fa-file-pdf text-danger" style="margin-right: 6px;"></i> Mayuri Mess Sanitation Protocols.pdf</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
-            <!-- View 5: Analytics Charts -->
-            <div id="analytics-view" class="view-content">
-                <div class="fallback-frame">
-                    <i class="fa-solid fa-chart-line fallback-icon"></i>
-                    <h2>Analytics & Metric Trends</h2>
-                    <p>Statistical distribution summaries are compiled from SQLite records.</p>
-                </div>
-            </div>
-
-            <!-- View 6: Settings panel -->
-            <div id="settings-view" class="view-content">
-                <div class="fallback-frame">
-                    <i class="fa-solid fa-sliders fallback-icon"></i>
-                    <h2>System Settings</h2>
-                    <p>Adjust API providers, model parameters, and database parameters.</p>
-                </div>
-            </div>
-
-            <!-- View 7: Support frames -->
-            <div id="support-view" class="view-content">
-                <div class="fallback-frame">
-                    <i class="fa-solid fa-headset fallback-icon"></i>
-                    <h2>Help & Operations Support</h2>
-                    <p>Contact VIT Bhopal Campus administrators for physical emergency alerts.</p>
+            <!-- View 6: Admin Analytics Trends -->
+            <div id="analytics-view" class="view-content admin-only">
+                <div class="card" style="padding: 24px; margin-bottom: 20px;">
+                    <h3 style="margin-bottom: 16px; font-weight: 700;"><i class="fa-solid fa-chart-bar text-primary"></i> Operations Workload Analytics</h3>
+                    <div id="analytics-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <h4 style="font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 12px;">Active Issues by Category</h4>
+                            <div id="analytics-category-bars" style="display: flex; flex-direction: column; gap: 12px;">
+                                <!-- Loaded dynamically -->
+                            </div>
+                        </div>
+                        <div>
+                            <h4 style="font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 12px;">Assigned Department Workload</h4>
+                            <div id="analytics-department-bars" style="display: flex; flex-direction: column; gap: 12px;">
+                                <!-- Loaded dynamically -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -362,8 +446,8 @@
                     <span>AI Chat Copilot</span>
                 </div>
                 <div class="chat-header-actions">
-                    <i class="fa-solid fa-minus chat-action-btn"></i>
-                    <i class="fa-solid fa-xmark chat-action-btn" onclick="toggleChatWindow()"></i>
+                    <i class="fa-solid fa-minus chat-action-btn" onclick="minimizeChatWindow()" title="Minimize Chat"></i>
+                    <i class="fa-solid fa-xmark chat-action-btn" onclick="toggleChatWindow()" title="Close Chat"></i>
                 </div>
             </header>
 
@@ -472,9 +556,19 @@
                 <h2>CampusPilot</h2>
                 <p>Campus Operations Command Center</p>
             </div>
+
+            <!-- Role Selection Tabs -->
+            <div class="login-role-tabs" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 12px; border: 1px solid var(--border-color);">
+                <button class="role-tab active" id="btn-role-student" onclick="selectLoginRole('STUDENT')" style="padding: 10px; font-size: 11px; font-weight: 700; border-radius: 8px; border: none; cursor: pointer; transition: var(--transition); background: var(--primary); color: white;">
+                    <i class="fa-solid fa-graduation-cap" style="margin-right: 4px;"></i> STUDENT ACCESS
+                </button>
+                <button class="role-tab" id="btn-role-admin" onclick="selectLoginRole('ADMIN')" style="padding: 10px; font-size: 11px; font-weight: 700; border-radius: 8px; border: none; cursor: pointer; transition: var(--transition); background: none; color: var(--text-muted);">
+                    <i class="fa-solid fa-shield-halved" style="margin-right: 4px;"></i> ADMIN PORTAL
+                </button>
+            </div>
             
             <div class="login-instructions">
-                <p>Please sign in using your official university email account to access operations telemetry.</p>
+                <p id="login-instructions-text">Please sign in using your official student email account to file complaints and track issues.</p>
                 <p style="font-size: 11px; margin-top: 6px; color: var(--warning); opacity: 0.85;">⚠️ Note: For local hosting, if Google returns an Authorization Error (invalid_client), please use the local testing bypass input field below.</p>
             </div>
             
@@ -512,6 +606,11 @@
                 </button>
             </div>
         </div>
+    </div>
+
+    <!-- Chat Floating Action Button (FAB) -->
+    <div class="chat-fab hidden" id="chat-fab" onclick="restoreChatWindow()" title="Open Copilot Assistant" style="position: fixed; bottom: 24px; right: 24px; width: 48px; height: 48px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; cursor: pointer; box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4); border: 1px solid rgba(255,255,255,0.1); z-index: 999; transition: var(--transition);">
+        <i class="fa-solid fa-comments"></i>
     </div>
 
     <!-- Main JS -->
