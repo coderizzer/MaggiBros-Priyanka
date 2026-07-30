@@ -12,7 +12,7 @@ from backend.app.schemas.schemas import (
     DepartmentOut, LocationOut, ComplaintCreate, ComplaintOut,
     AnalyticsResponse, CategoryCount, StatusCount, DepartmentCount, HeatmapPoint,
     DashboardResponse, CategoryAnalytics, DepartmentAnalytics, LocationAnalytics,
-    MapComplaintsResponse, MapLocationDetail
+    MapComplaintsResponse, MapLocationDetail, InsightItem, InsightsResponse
 )
 
 logger = logging.getLogger("campuspilot.tickets")
@@ -362,3 +362,58 @@ def get_map_complaints(db: Session = Depends(get_db)):
         )
         
     return MapComplaintsResponse(locations=map_details)
+
+@router.get("/analytics/insights", response_model=InsightsResponse)
+def get_analytics_insights(db: Session = Depends(get_db)):
+    insights_list = []
+    
+    # 1. Hotspot location check
+    loc_counts = db.query(Location.name, func.count(Complaint.id)).join(Complaint).group_by(Location.name).all()
+    if loc_counts:
+        top_loc, top_count = max(loc_counts, key=lambda x: x[1])
+        if top_count >= 1:
+            insights_list.append(
+                InsightItem(
+                    title=f"{top_loc} Issue Spike",
+                    description=f"{top_loc} has experienced a high concentration of complaints ({top_count} issues reported).",
+                    severity="HIGH" if top_count > 3 else "MEDIUM"
+                )
+            )
+            
+    # 2. Category Concentration check
+    cat_counts = db.query(Complaint.category, func.count(Complaint.id)).group_by(Complaint.category).all()
+    if cat_counts:
+        top_cat, top_cat_count = max(cat_counts, key=lambda x: x[1])
+        if top_cat_count >= 1:
+            insights_list.append(
+                InsightItem(
+                    title=f"Concentration on {top_cat.replace('_', ' ').title()}",
+                    description=f"Complaints related to '{top_cat.replace('_', ' ').title()}' represent a significant share of operations ({top_cat_count} reports).",
+                    severity="HIGH" if top_cat_count > 3 else "MEDIUM"
+                )
+            )
+            
+    # 3. Department overload check
+    dept_open_counts = db.query(Department.name, func.count(Ticket.id)).join(Ticket).filter(Ticket.status.in_(["OPEN", "IN_PROGRESS"])).group_by(Department.name).all()
+    if dept_open_counts:
+        top_dept, open_count = max(dept_open_counts, key=lambda x: x[1])
+        if open_count >= 1:
+            insights_list.append(
+                InsightItem(
+                    title=f"{top_dept} Overload",
+                    description=f"The {top_dept} department currently has {open_count} unresolved operational tickets pending.",
+                    severity="HIGH" if open_count > 3 else "MEDIUM"
+                )
+            )
+            
+    # 4. Default / operational health fallback
+    if not insights_list:
+        insights_list.append(
+            InsightItem(
+                title="Stable Operations",
+                description="All campus departments and locations are operating within normal thresholds.",
+                severity="LOW"
+            )
+        )
+        
+    return InsightsResponse(insights=insights_list)

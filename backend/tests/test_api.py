@@ -312,6 +312,20 @@ def test_main_chat_endpoint(client, db_session):
     assert data["type"] == "answer"
     assert "unable to find" in data["message"].lower() or "cannot find" in data["message"].lower()
 
+def test_analytics_insights(client, db_session):
+    # 1. Fetch insights when DB is populated
+    response = client.get("/api/analytics/insights")
+    assert response.status_code == 200
+    data = response.json()
+    assert "insights" in data
+    assert len(data["insights"]) >= 1
+    # Check shape of first item
+    first_insight = data["insights"][0]
+    assert "title" in first_insight
+    assert "description" in first_insight
+    assert first_insight["severity"] in ["HIGH", "MEDIUM", "LOW"]
+
+
 
 
 

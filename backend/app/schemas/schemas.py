@@ -185,3 +185,11 @@ class AnalyticsResponse(BaseModel):
     by_department: List[DepartmentCount]
     heatmap: List[HeatmapPoint]
     ai_insights: List[str]
+
+class InsightItem(BaseModel):
+    title: str
+    description: str
+    severity: str
+
+class InsightsResponse(BaseModel):
+    insights: List[InsightItem]
