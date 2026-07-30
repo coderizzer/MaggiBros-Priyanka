@@ -432,7 +432,8 @@ function populateMapOverlay(locations, containerSelector, imgSelector) {
         "Hostel Office": { top: "70%", left: "63%" },
         "Boys Playground": { top: "52%", left: "80%" },
         "Special Building": { top: "85%", left: "36%" },
-        "Lab Complex": { top: "18%", left: "24%" }
+        "Lab Complex": { top: "18%", left: "24%" },
+        "Mayuri Mess": { top: "42%", left: "45%" }
     };
     
     locations.forEach(loc => {
