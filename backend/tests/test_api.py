@@ -147,9 +147,9 @@ def test_workflow_chat_fallback(client):
     response = client.post("/api/agent/chat", json=payload)
     assert response.status_code == 200
     data = response.json()
-    assert data["intent"] == "TICKET"
+    assert data["intent"] == "COMPLAINT"
     assert data["ticket_created"] is True
-    assert "Ticket Reference" in data["response"]
+    assert "Ticket ID" in data["response"]
 
 def test_analytics_and_dashboard_aggregation(client, db_session):
     loc = db_session.query(Location).first()
