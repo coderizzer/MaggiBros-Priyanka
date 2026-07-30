@@ -88,9 +88,13 @@ def create_ticket_node(state: AgentState) -> AgentState:
             if not loc:
                 loc = db.query(Location).first() # absolute fallback
                 
+        # Calculate user ID matching frontend email hashing
+        email_str = state.get("student_email", "student@vitbhopal.ac.in")
+        hashed_user_id = sum(ord(c) for c in email_str.lower()) % 1000 + 1
+
         # Create complaint record first
         new_complaint = Complaint(
-            user_id=1,  # Mock user ID for the current session
+            user_id=hashed_user_id,
             location_id=loc.id if loc else 1,
             category=route_details.category,
             description=message,
