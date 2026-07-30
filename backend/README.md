@@ -44,11 +44,35 @@ CampusPilot is an AI-powered Campus Operations Platform. It automates ticket fil
    ```
    *Note: If no API keys are provided, CampusPilot will automatically run in **MOCK** mode. It uses keyword-based heuristics for intent detection, ticket routing, and replies, making it fully functional and testable without active API tokens.*
 
-5. **Initialize & Seed the Database**:
-   The database automatically initializes and seeds default departments, locations, and sample tickets on server start. Alternatively, run the seed script manually:
+---
+
+## Database & Data Seeding
+
+1. **Initialize Standard Seed Data**:
+   Database automatically seeds default locations, departments, and basic initial complaints on startup. Alternatively, run:
    ```bash
    PYTHONPATH=. python app/database/seed.py
    ```
+
+2. **Generate Realistic Historical Seeding (Demo Mode)**:
+   To populate SQLite with approximately ~100–150 historical complaint logs spread across the last 30 days (creating a hotspot of water leakage complaints in Hostel B), execute:
+   ```bash
+   PYTHONPATH=. python -m app.database.seed_demo
+   ```
+
+---
+
+## RAG Knowledge Base Ingestion
+
+Place university handbook/calendar PDF files inside:
+```
+backend/data/documents/
+```
+Then, execute the ingestion script to chunk, embed, and store documents in the FAISS vector database:
+```bash
+PYTHONPATH=. python -m app.services.ingest_documents
+```
+The vector files will be created and updated inside `backend/vectorstore/`.
 
 ---
 
@@ -56,7 +80,7 @@ CampusPilot is an AI-powered Campus Operations Platform. It automates ticket fil
 
 Start the FastAPI development server:
 ```bash
-PYTHONPATH=. python app/main.py
+PYTHONPATH=. python -m app.main.py
 ```
 Or use Uvicorn directly:
 ```bash
@@ -70,33 +94,108 @@ Interactive Swagger Documentation is hosted at: **`http://localhost:8000/docs`**
 
 ## Testing
 
-Run the test suite using pytest:
+Run the full pytest suite:
 ```bash
 PYTHONPATH=. pytest tests/test_api.py
 ```
 
 ---
 
-## Key API Endpoints
+## API Endpoints Reference
 
-### 1. Operations (Tickets)
-- **`GET /api/departments`**: List all campus departments (IT, MAINT, ELEC, HOSTEL, ACAD).
-- **`GET /api/locations`**: List registered campus locations (Hostel Block 1, Central Library, Boys Mess Hall, etc.).
-- **`GET /api/tickets`**: List all operations tickets (supports filtering by `status`, `department_id`, `location_id`).
-- **`POST /api/tickets`**: Create a ticket manually.
-- **`PUT /api/tickets/{ticket_id}/status`**: Update ticket status (`OPEN`, `IN_PROGRESS`, `RESOLVED`).
+### 1. General & Health
+- **`GET /health`**: Health status check.
+- **`GET /`**: Welcome and swagger paths.
 
-### 2. Analytics & Heatmap
-- **`GET /api/analytics`**: Fetch aggregate counters, average resolution times, category/status/department distributions, and AI operational insights.
-- **`GET /api/heatmap`**: Get GPS coordinates of locations weighted by the count and severity of their active tickets (used by frontend for heatmap rendering).
+### 2. Chat Interface
+- **`POST /chat`**: The main user-facing endpoint handling FAQ, Complaint detection, and Location-based ticket filing.
 
-### 3. RAG Knowledge Base
-- **`POST /api/rag/upload`**: Upload and ingest a campus PDF handbook or FAQ document into the FAISS vector store.
-- **`POST /api/rag/query`**: Run semantic similarity searches against ingested documents.
+**FAQ Request Example**:
+```json
+{
+  "message": "When is the revaluation deadline?"
+}
+```
+**FAQ Response**:
+```json
+{
+  "type": "answer",
+  "message": "The revaluation deadline is detailed in the Academic Calendar...",
+  "source": {
+    "document": "Academic Calendar 2026.pdf",
+    "page": 4
+  },
+  "confidence": 0.94
+}
+```
 
-### 4. AI Agent Workflow
-- **`POST /api/agent/chat`**: Process a conversational message. Runs the LangGraph workflow:
-  1. **Intent Detection**: Analyzes input context and classifies it (`TICKET`, `QUERY`, or `GENERAL`).
-  2. **Ticket Routing**: If classified as a `TICKET`, routes the complaint to the correct department (IT, MAINT, etc.), sets a priority (`LOW`, `HIGH`, `CRITICAL`), matches the closest campus location, and saves it in the database.
-  3. **RAG Search**: If classified as a `QUERY`, searches FAISS vector store for handbook guidelines.
-  4. **Reply Generation**: Builds a structured response and returns ticket metadata if created.
+**Complaint (Step 1 - Interception)**:
+```json
+{
+  "message": "My hostel corridor has water leakage."
+}
+```
+**Response**:
+```json
+{
+  "type": "complaint",
+  "message": "I can help you report this issue.",
+  "category": "water_leakage",
+  "next_action": "select_location"
+}
+```
+
+**Complaint (Step 2 - Ticket Creation)**:
+```json
+{
+  "message": "Water leaking from ceiling",
+  "location_id": 2
+}
+```
+**Response**:
+```json
+{
+  "type": "ticket_created",
+  "ticket_id": 12,
+  "message": "Your complaint has been submitted successfully.",
+  "department": "Maintenance",
+  "estimated_resolution": "24 hours"
+}
+```
+
+**Ticket Status Check Request**:
+```json
+{
+  "message": "What is the status of ticket 12?"
+}
+```
+**Response**:
+```json
+{
+  "type": "ticket_status",
+  "ticket_id": 12,
+  "status": "OPEN",
+  "department": "Maintenance",
+  "estimated_resolution": "24 hours"
+}
+```
+
+### 3. Complaints & Tickets CRUD
+- **`POST /api/complaints`**: File a raw complaint.
+- **`GET /api/complaints`**: List all complaints.
+- **`POST /api/tickets`**: File a ticket.
+- **`GET /api/tickets`**: List all tickets.
+- **`GET /api/tickets/{id}`**: Get ticket detail by ID.
+- **`PATCH /api/tickets/{id}/status`**: Update ticket status (`OPEN`, `IN_PROGRESS`, `RESOLVED`, `CLOSED`).
+- **`PATCH /api/tickets/{id}/department`**: Re-route ticket to a different department.
+
+### 4. Operations Analytics & Map Heatmap
+- **`GET /api/dashboard`**: Fetch aggregate totals, open issues, resolved today count, average resolution time, and breakdown maps.
+- **`GET /api/analytics/categories`**: Count grouping by category.
+- **`GET /api/analytics/departments`**: Count grouping by department.
+- **`GET /api/analytics/locations`**: Count grouping by location.
+- **`GET /api/analytics/insights`**: Fetches deterministic AI rules-based insights about spike hot-spots, overloads, and operations trends.
+- **`GET /api/map/complaints`**: Geolocation coordinate mappings for the frontend heatmap.
+
+### 5. RAG Knowledge Search
+- **`POST /api/knowledge/search`**: Directly query the FAISS document search index.
