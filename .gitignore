@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.venv
+var/
+sdist/
+var/
+eggs/
+.eggs/
+parts/
+bin/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+parts/
+share/
+eggs/
+
+# SQLite databases
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Environments
+.env
+.env.local
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# FAISS and index metadata files generated during runtime
+backend/app/data/faiss_index.bin
+backend/app/data/faiss_metadata.json
+backend/app/data/uploads/

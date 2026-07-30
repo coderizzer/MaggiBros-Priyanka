@@ -1,0 +1,134 @@
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, List
+from datetime import datetime
+
+# Department schemas
+class DepartmentBase(BaseModel):
+    name: str
+    code: str
+    email: Optional[EmailStr] = None
+
+class DepartmentCreate(DepartmentBase):
+    pass
+
+class DepartmentOut(DepartmentBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+# Location schemas
+class LocationBase(BaseModel):
+    name: str
+    block: str
+    latitude: float
+    longitude: float
+
+class LocationCreate(LocationBase):
+    pass
+
+class LocationOut(LocationBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+# Ticket schemas
+class TicketBase(BaseModel):
+    title: str
+    description: str
+    category: Optional[str] = None
+    priority: Optional[str] = "MEDIUM"
+    student_name: str
+    student_email: EmailStr
+
+class TicketCreate(TicketBase):
+    location_id: Optional[int] = None
+    department_id: Optional[int] = None
+
+class TicketOut(TicketBase):
+    id: int
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    location: Optional[LocationOut] = None
+    department: Optional[DepartmentOut] = None
+
+    class Config:
+        from_attributes = True
+
+class TicketStatusUpdate(BaseModel):
+    status: str
+
+
+# RAG/Knowledge base schemas
+class DocumentOut(BaseModel):
+    id: int
+    title: str
+    file_path: str
+    uploaded_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class RAGQueryRequest(BaseModel):
+    query: str
+    k: Optional[int] = 4
+
+class RAGSearchResult(BaseModel):
+    text: str
+    source: str
+    page: int
+    score: float
+
+class RAGQueryResponse(BaseModel):
+    query: str
+    results: List[RAGSearchResult]
+
+
+# AI Workflow schemas
+class WorkflowQueryRequest(BaseModel):
+    message: str
+    student_name: str
+    student_email: EmailStr
+
+class WorkflowQueryResponse(BaseModel):
+    intent: str # TICKET, QUERY, GENERAL
+    response: str
+    ticket_created: bool
+    ticket: Optional[TicketOut] = None
+
+
+# Analytics schemas
+class CategoryCount(BaseModel):
+    category: str
+    count: int
+
+class StatusCount(BaseModel):
+    status: str
+    count: int
+
+class DepartmentCount(BaseModel):
+    department_name: str
+    count: int
+
+class HeatmapPoint(BaseModel):
+    location_name: str
+    latitude: float
+    longitude: float
+    weight: float # based on active tickets count & severity
+    active_tickets_count: int
+
+class AnalyticsResponse(BaseModel):
+    total_tickets: int
+    open_tickets: int
+    in_progress_tickets: int
+    resolved_tickets: int
+    avg_resolution_time_hours: float
+    by_category: List[CategoryCount]
+    by_status: List[StatusCount]
+    by_department: List[DepartmentCount]
+    heatmap: List[HeatmapPoint]
+    ai_insights: List[str]

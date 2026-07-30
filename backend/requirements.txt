@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+pydantic
+sqlalchemy
+python-dotenv
+python-multipart
+pypdf
+faiss-cpu
+sentence-transformers
+langgraph
+google-generativeai
+openai
+pytest
+email-validator
