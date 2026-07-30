@@ -292,6 +292,25 @@ def test_main_chat_endpoint(client, db_session):
     assert "ticket_id" in data
     assert data["department"] == "Maintenance"
     assert "hours" in data["estimated_resolution"]
+    created_id = data["ticket_id"]
+    
+    # 4. Test Ticket Status Retrieval (valid)
+    status_payload = {"message": f"What is the status of ticket {created_id}?"}
+    response = client.post("/chat", json=status_payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["type"] == "ticket_status"
+    assert data["ticket_id"] == created_id
+    assert data["status"] == "OPEN"
+    assert data["department"] == "Maintenance"
+    
+    # 5. Test Ticket Status Retrieval (invalid nonexistent)
+    invalid_payload = {"message": "What is the status of ticket 99999?"}
+    response = client.post("/chat", json=invalid_payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["type"] == "answer"
+    assert "unable to find" in data["message"].lower() or "cannot find" in data["message"].lower()
 
 
 

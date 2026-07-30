@@ -93,6 +93,29 @@ def handle_chat_session(request: ChatRequest, db: Session = Depends(get_db)):
                 "next_action": "select_location"
             }
             
+        # If ticket status request
+        if intent == "TICKET_STATUS":
+            ticket_id = result.get("ticket_id")
+            if ticket_id:
+                ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
+                if ticket:
+                    dept_name = ticket.department.name if ticket.department else "Maintenance"
+                    return {
+                        "type": "ticket_status",
+                        "ticket_id": ticket.id,
+                        "status": ticket.status,
+                        "department": dept_name,
+                        "estimated_resolution": f"{ticket.estimated_resolution_hours} hours"
+                    }
+            
+            # If not found or ticket_id could not be resolved, return the node's graceful answer
+            return {
+                "type": "answer",
+                "message": result.get("answer"),
+                "source": None,
+                "confidence": 0.95
+            }
+            
         # If FAQ, return structured source details
         if intent == "FAQ":
             return {
