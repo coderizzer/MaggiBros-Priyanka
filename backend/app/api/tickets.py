@@ -152,8 +152,8 @@ def patch_ticket_status(ticket_id: int, status_update: TicketStatusUpdate, db: S
         raise HTTPException(status_code=404, detail="Ticket not found.")
         
     status = status_update.status.upper()
-    if status not in ["OPEN", "IN_PROGRESS", "RESOLVED"]:
-        raise HTTPException(status_code=400, detail="Invalid status. Must be OPEN, IN_PROGRESS, or RESOLVED.")
+    if status not in ["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"]:
+        raise HTTPException(status_code=400, detail="Invalid status. Must be OPEN, IN_PROGRESS, RESOLVED, or CLOSED.")
         
     ticket.status = status
     ticket.updated_at = datetime.datetime.utcnow()
