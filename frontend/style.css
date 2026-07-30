@@ -427,6 +427,9 @@ body {
 .glowing-marker-red {
     animation: markerGlowRed 1.5s infinite alternate;
 }
+.glowing-marker-blue {
+    animation: markerGlowBlue 1.5s infinite alternate;
+}
 
 @keyframes markerGlow {
     from { r: 4; fill-opacity: 0.6; }
@@ -439,6 +442,10 @@ body {
 @keyframes markerGlowRed {
     from { r: 4; fill-opacity: 0.6; }
     to { r: 6; fill-opacity: 1; filter: drop-shadow(0 0 4px var(--danger)); }
+}
+@keyframes markerGlowBlue {
+    from { r: 4; fill-opacity: 0.6; }
+    to { r: 6; fill-opacity: 1; filter: drop-shadow(0 0 4px #0ea5e9); }
 }
 
 .status-card {
