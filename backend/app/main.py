@@ -7,6 +7,7 @@ from backend.app.database.connection import engine, Base
 from backend.app.api.tickets import router as tickets_router
 from backend.app.api.rag import router as rag_router
 from backend.app.api.workflow import router as workflow_router
+from backend.app.api.knowledge import router as knowledge_router
 from backend.app.database.seed import seed_db
 
 # Set up basic logging configuration
@@ -48,6 +49,7 @@ app.add_middleware(
 app.include_router(tickets_router, prefix="/api")
 app.include_router(rag_router, prefix="/api")
 app.include_router(workflow_router, prefix="/api")
+app.include_router(knowledge_router, prefix="/api")
 
 @app.get("/")
 def read_root():

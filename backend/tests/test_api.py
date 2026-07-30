@@ -222,3 +222,17 @@ def test_analytics_and_dashboard_aggregation(client, db_session):
     assert loc_detail["total_complaints"] == 1
     assert loc_detail["categories"]["water_leakage"] == 1
 
+def test_knowledge_search_empty(client):
+    # Tests behavior when vector store is empty / no documents ingested
+    payload = {
+        "query": "When is the revaluation deadline?",
+        "k": 2
+    }
+    response = client.post("/api/knowledge/search", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert "results" in data
+    # Should return empty list gracefully
+    assert len(data["results"]) == 0
+
+

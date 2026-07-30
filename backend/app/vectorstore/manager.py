@@ -6,19 +6,20 @@ from sentence_transformers import SentenceTransformer
 
 # Dimension of all-MiniLM-L6-v2 embeddings is 384
 EMBEDDING_DIMENSION = 384
-INDEX_PATH = "backend/app/data/faiss_index.bin"
-METADATA_PATH = "backend/app/data/faiss_metadata.json"
+
+# Save path updated to root-level backend/vectorstore/ as requested
+INDEX_PATH = "backend/vectorstore/faiss_index.bin"
+METADATA_PATH = "backend/vectorstore/faiss_metadata.json"
 
 class VectorStoreManager:
     def __init__(self):
         self.dimension = EMBEDDING_DIMENSION
-        # Lazy load model to speed up application startup
         self._model = None
         self.index = None
         self.documents = [] # list of dicts: {"text": str, "source": str, "page": int}
         
-        # Ensure data folder exists
-        os.makedirs("backend/app/data", exist_ok=True)
+        # Ensure target folder exists
+        os.makedirs("backend/vectorstore", exist_ok=True)
         self.load_index()
 
     @property
