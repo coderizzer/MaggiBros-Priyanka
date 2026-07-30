@@ -10,7 +10,9 @@ from backend.app.models.models import Ticket, Department, Location, Complaint
 from backend.app.schemas.schemas import (
     TicketOut, TicketCreate, TicketStatusUpdate, TicketDepartmentUpdate,
     DepartmentOut, LocationOut, ComplaintCreate, ComplaintOut,
-    AnalyticsResponse, CategoryCount, StatusCount, DepartmentCount, HeatmapPoint
+    AnalyticsResponse, CategoryCount, StatusCount, DepartmentCount, HeatmapPoint,
+    DashboardResponse, CategoryAnalytics, DepartmentAnalytics, LocationAnalytics,
+    MapComplaintsResponse, MapLocationDetail
 )
 
 logger = logging.getLogger("campuspilot.tickets")
@@ -276,3 +278,87 @@ def get_analytics(db: Session = Depends(get_db)):
         heatmap=heatmap,
         ai_insights=insights
     )
+
+@router.get("/dashboard", response_model=DashboardResponse)
+def get_dashboard(db: Session = Depends(get_db)):
+    total = db.query(Ticket).count()
+    open_count = db.query(Ticket).filter(Ticket.status == "OPEN").count()
+    
+    # Resolved today
+    today_start = datetime.datetime.combine(datetime.date.today(), datetime.time.min)
+    resolved_today = db.query(Ticket).filter(
+        Ticket.status == "RESOLVED",
+        Ticket.updated_at >= today_start
+    ).count()
+    
+    # Average resolution time
+    resolved_tickets = db.query(Ticket).filter(Ticket.status == "RESOLVED").all()
+    total_hours = 0.0
+    for t in resolved_tickets:
+        delta = t.updated_at - t.created_at
+        total_hours += delta.total_seconds() / 3600.0
+    avg_res_time = (total_hours / len(resolved_tickets)) if resolved_tickets else 0.0
+
+    # Categories distribution from complaints
+    categories_query = db.query(Complaint.category, func.count(Complaint.id)).group_by(Complaint.category).all()
+    categories_dict = {c[0]: c[1] for c in categories_query if c[0]}
+    
+    # Departments distribution from tickets
+    depts_query = db.query(Department.name, func.count(Ticket.id)).join(Ticket).group_by(Department.name).all()
+    depts_dict = {d[0]: d[1] for d in depts_query if d[0]}
+    
+    # Top location based on complaint count
+    top_loc_query = db.query(Location.name, func.count(Complaint.id)).join(Complaint).group_by(Location.name).order_by(func.count(Complaint.id).desc()).first()
+    top_location = top_loc_query[0] if top_loc_query else None
+    
+    return DashboardResponse(
+        total_tickets=total,
+        open_tickets=open_count,
+        resolved_today=resolved_today,
+        average_resolution_time=avg_res_time,
+        categories=categories_dict,
+        departments=depts_dict,
+        top_location=top_location
+    )
+
+@router.get("/analytics/categories", response_model=List[CategoryAnalytics])
+def get_analytics_categories(db: Session = Depends(get_db)):
+    categories = db.query(Complaint.category, func.count(Complaint.id)).group_by(Complaint.category).all()
+    return [CategoryAnalytics(category=c[0], count=c[1]) for c in categories]
+
+@router.get("/analytics/departments", response_model=List[DepartmentAnalytics])
+def get_analytics_departments(db: Session = Depends(get_db)):
+    depts = db.query(Department.name, func.count(Ticket.id)).join(Ticket).group_by(Department.name).all()
+    return [DepartmentAnalytics(department_name=d[0], count=d[1]) for d in depts]
+
+@router.get("/analytics/locations", response_model=List[LocationAnalytics])
+def get_analytics_locations(db: Session = Depends(get_db)):
+    locations = db.query(Location.name, func.count(Complaint.id)).join(Complaint).group_by(Location.name).all()
+    return [LocationAnalytics(location_name=l[0], count=l[1]) for l in locations]
+
+@router.get("/map/complaints", response_model=MapComplaintsResponse)
+def get_map_complaints(db: Session = Depends(get_db)):
+    locations = db.query(Location).all()
+    map_details = []
+    
+    for loc in locations:
+        complaints = db.query(Complaint).filter(Complaint.location_id == loc.id).all()
+        if not complaints:
+            continue
+            
+        categories_dict = {}
+        for c in complaints:
+            categories_dict[c.category] = categories_dict.get(c.category, 0) + 1
+            
+        map_details.append(
+            MapLocationDetail(
+                location_id=loc.id,
+                name=loc.name,
+                latitude=loc.latitude,
+                longitude=loc.longitude,
+                total_complaints=len(complaints),
+                categories=categories_dict
+            )
+        )
+        
+    return MapComplaintsResponse(locations=map_details)

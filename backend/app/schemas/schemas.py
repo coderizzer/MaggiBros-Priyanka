@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, EmailStr
-from typing import Optional, List
+from typing import Optional, List, Dict
 from datetime import datetime
 
 # Department schemas
@@ -114,13 +114,47 @@ class WorkflowQueryRequest(BaseModel):
     student_email: EmailStr
 
 class WorkflowQueryResponse(BaseModel):
-    intent: str # TICKET, QUERY, GENERAL
+    intent: str
     response: str
     ticket_created: bool
     ticket: Optional[TicketOut] = None
 
 
-# Analytics schemas
+# Analytics & Dashboard schemas
+class CategoryAnalytics(BaseModel):
+    category: str
+    count: int
+
+class DepartmentAnalytics(BaseModel):
+    department_name: str
+    count: int
+
+class LocationAnalytics(BaseModel):
+    location_name: str
+    count: int
+
+class DashboardResponse(BaseModel):
+    total_tickets: int
+    open_tickets: int
+    resolved_today: int
+    average_resolution_time: float
+    categories: Dict[str, int]
+    departments: Dict[str, int]
+    top_location: Optional[str] = None
+
+class MapLocationDetail(BaseModel):
+    location_id: int
+    name: str
+    latitude: float
+    longitude: float
+    total_complaints: int
+    categories: Dict[str, int]
+
+class MapComplaintsResponse(BaseModel):
+    locations: List[MapLocationDetail]
+
+
+# Legacy schemas (kept for backwards compatibility)
 class CategoryCount(BaseModel):
     category: str
     count: int

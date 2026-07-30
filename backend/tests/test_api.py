@@ -150,3 +150,75 @@ def test_workflow_chat_fallback(client):
     assert data["intent"] == "TICKET"
     assert data["ticket_created"] is True
     assert "Ticket Reference" in data["response"]
+
+def test_analytics_and_dashboard_aggregation(client, db_session):
+    loc = db_session.query(Location).first()
+    dept = db_session.query(Department).filter(Department.code == "MAINT").first()
+    
+    # 1. Create a complaint & ticket
+    c = Complaint(
+        user_id=10,
+        location_id=loc.id,
+        category="water_leakage",
+        description="Leaking pipeline in Block A",
+        priority="HIGH"
+    )
+    db_session.add(c)
+    db_session.commit()
+    
+    t = Ticket(
+        complaint_id=c.id,
+        title="Pipeline Leakage",
+        description="Leaking pipeline in Block A",
+        status="OPEN",
+        priority="HIGH",
+        location_id=loc.id,
+        department_id=dept.id
+    )
+    db_session.add(t)
+    db_session.commit()
+    
+    # 2. Test /dashboard
+    response = client.get("/api/dashboard")
+    assert response.status_code == 200
+    dash = response.json()
+    assert dash["total_tickets"] == 1
+    assert dash["open_tickets"] == 1
+    assert dash["categories"]["water_leakage"] == 1
+    assert dash["departments"]["Maintenance"] == 1
+    assert dash["top_location"] == loc.name
+    
+    # 3. Test /analytics/categories
+    response = client.get("/api/analytics/categories")
+    assert response.status_code == 200
+    cats = response.json()
+    assert len(cats) == 1
+    assert cats[0]["category"] == "water_leakage"
+    assert cats[0]["count"] == 1
+    
+    # 4. Test /analytics/departments
+    response = client.get("/api/analytics/departments")
+    assert response.status_code == 200
+    depts = response.json()
+    assert len(depts) == 1
+    assert depts[0]["department_name"] == "Maintenance"
+    assert depts[0]["count"] == 1
+    
+    # 5. Test /analytics/locations
+    response = client.get("/api/analytics/locations")
+    assert response.status_code == 200
+    locs = response.json()
+    assert len(locs) == 1
+    assert locs[0]["location_name"] == loc.name
+    assert locs[0]["count"] == 1
+    
+    # 6. Test /map/complaints
+    response = client.get("/api/map/complaints")
+    assert response.status_code == 200
+    map_data = response.json()
+    assert len(map_data["locations"]) == 1
+    loc_detail = map_data["locations"][0]
+    assert loc_detail["name"] == loc.name
+    assert loc_detail["total_complaints"] == 1
+    assert loc_detail["categories"]["water_leakage"] == 1
+
