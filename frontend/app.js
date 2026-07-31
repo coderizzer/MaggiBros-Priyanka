@@ -986,3 +986,41 @@ async function renderAnalyticsBars() {
         console.error("Error drawing analytics charts:", e);
     }
 }
+
+async function resetDemoDatabase() {
+    if (!confirm("Are you sure you want to completely reset the operational database and reload the demo seeding datasets? This will wipe all current tickets.")) {
+        return;
+    }
+    
+    const originalBtn = document.querySelector(".admin-only[onclick='resetDemoDatabase()']");
+    if (originalBtn) {
+        originalBtn.disabled = true;
+        originalBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Resetting...</span>';
+    }
+    
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/admin/reset-db`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+        });
+        
+        if (res.ok) {
+            alert("Database successfully reset and loaded with clean operational demo telemetry data!");
+            // Refresh dashboard, tickets table, and reload charts
+            fetchTickets();
+            refreshDashboard();
+            if (typeof initCampusMap === "function") {
+                initCampusMap();
+            }
+        } else {
+            alert("Failed to reset database: Server returned an error.");
+        }
+    } catch (e) {
+        alert("Network error: Could not reach the administration reset endpoint.");
+    } finally {
+        if (originalBtn) {
+            originalBtn.disabled = false;
+            originalBtn.innerHTML = '<i class="fa-solid fa-arrow-rotate-left"></i> <span>Reset Demo Data</span>';
+        }
+    }
+}

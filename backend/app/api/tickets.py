@@ -417,3 +417,13 @@ def get_analytics_insights(db: Session = Depends(get_db)):
         )
         
     return InsightsResponse(insights=insights_list)
+
+@router.post("/admin/reset-db")
+def reset_database_to_seeded_demo():
+    try:
+        from backend.app.database.seed_demo import seed_demo_data
+        seed_demo_data()
+        return {"status": "success", "message": "Database dropped, recreated, and successfully seeded with operational demo data."}
+    except Exception as e:
+        logger.error(f"Failed to reset database: {e}")
+        raise HTTPException(status_code=500, detail=f"Database reset failed: {str(e)}")
