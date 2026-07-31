@@ -14,6 +14,8 @@ router = APIRouter(prefix="", tags=["Main Chat Interface"])
 class ChatRequest(BaseModel):
     message: str
     location_id: Optional[int] = None
+    student_email: Optional[str] = None
+    student_name: Optional[str] = None
 
 @router.post("/chat")
 def handle_chat_session(request: ChatRequest, db: Session = Depends(get_db)):
@@ -39,9 +41,13 @@ def handle_chat_session(request: ChatRequest, db: Session = Depends(get_db)):
             category = class_res.get("category", "water_leakage")
             priority = class_res.get("priority", "MEDIUM")
             
+            # Resolve user_id from email
+            email_str = request.student_email or "student@vitbhopal.ac.in"
+            hashed_user_id = sum(ord(c) for c in email_str.lower()) % 1000 + 1
+
             # Create Complaint
             complaint = Complaint(
-                user_id=1,  # Default student profile
+                user_id=hashed_user_id,
                 location_id=loc.id,
                 category=category,
                 description=request.message,
@@ -99,8 +105,8 @@ def handle_chat_session(request: ChatRequest, db: Session = Depends(get_db)):
         # Scenario 2: Standard message -> Route through LangGraph
         result = run_agent_workflow(
             user_message=request.message,
-            student_name="Student",
-            student_email="student@vitbhopal.ac.in"
+            student_name=request.student_name or "Student",
+            student_email=request.student_email or "student@vitbhopal.ac.in"
         )
         
         intent = result.get("intent", "UNKNOWN")

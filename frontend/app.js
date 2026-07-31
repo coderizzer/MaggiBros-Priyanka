@@ -167,10 +167,18 @@ function initChat() {
             const message = input.value.trim();
             if (!message) return;
             
-            appendChatMessage("user", `<strong>Admin</strong><br>${message}`);
+            const name = localStorage.getItem("user_name") || "Student";
+            const role = localStorage.getItem("user_role") || "STUDENT";
+            const email = localStorage.getItem("user_email") || "student@vitbhopal.ac.in";
+            
+            appendChatMessage("user", `<strong>${name} (${role})</strong><br>${message}`);
             input.value = "";
             
-            await dispatchChatMessage({ message });
+            await dispatchChatMessage({ 
+                message,
+                student_name: name,
+                student_email: email
+            });
         };
         
         btn.addEventListener("click", sendMessage);
